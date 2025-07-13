@@ -73,18 +73,18 @@ function getSuggestions(course: Course) {
   const percent = getAttendancePercent(course);
   const req = course.required;
   if (percent >= req) {
-    let canBunk = 0,
-      at = course.at_class,
-      tot = course.t_class;
+    let canBunk = 0;
+    const at = course.at_class;
+    let tot = course.t_class;
     while ((at / (tot + 1)) * 100 >= req) {
       tot++;
       canBunk++;
     }
     return `You can miss ${canBunk} more class${canBunk === 1 ? "" : "es"} and stay above ${req}%`;
   } else {
-    let need = 0,
-      at = course.at_class,
-      tot = course.t_class;
+    let need = 0;
+    let at = course.at_class;
+    let tot = course.t_class;
     while ((at + 1) / (tot + 1) * 100 < req) {
       at++;
       tot++;
@@ -235,7 +235,7 @@ export default function Attendance() {
         showAlert("Course added successfully!", "success");
       }
       closeModal();
-    } catch (err) {
+    } catch {
       showAlert("Error saving course", "error");
     } finally {
       setLoading(false);
@@ -351,7 +351,7 @@ export default function Attendance() {
           <div className="text-center text-[var(--text-muted)] py-8 text-base sm:text-lg">No courses found.</div>
         )}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-          {filteredCourses.map((course, i) => {
+          {filteredCourses.map((course) => {
             const percent = getAttendancePercent(course);
             const below = percent < course.required;
             return (

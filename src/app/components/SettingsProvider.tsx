@@ -110,8 +110,8 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       } else {
         setError('Failed to load settings');
       }
-    } catch (err) {
-      setError('Failed to load settings');
+    } catch {
+      setSettings(null); // Changed from defaultSettings to null
     } finally {
       setLoading(false);
     }

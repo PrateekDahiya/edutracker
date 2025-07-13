@@ -1,65 +1,76 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/models/db";
 import { getSetting, saveSetting, SettingType } from "@/services/settingService";
+import Setting from "@/models/Setting";
 
 // Validation function for settings
-function validateSettings(data: any): { isValid: boolean; errors: string[] } {
+function validateSettings(data: unknown): { isValid: boolean; errors: string[] } {
   const errors: string[] = [];
   
-  if (!data.user_id || typeof data.user_id !== 'string') {
+  if (!data || typeof data !== 'object' || !('user_id' in data)) {
     errors.push('user_id is required and must be a string');
+  } else {
+    const user_id = (data as { user_id: string }).user_id;
+    if (!user_id || typeof user_id !== 'string') {
+      errors.push('user_id is required and must be a string');
+    }
   }
   
-  if (typeof data.lectureDuration !== 'number' || data.lectureDuration < 30 || data.lectureDuration > 180) {
+  if (!data || typeof data !== 'object' || !('lectureDuration' in data)) {
     errors.push('lectureDuration must be a number between 30 and 180');
+  } else {
+    const lectureDuration = (data as { lectureDuration: number }).lectureDuration;
+    if (typeof lectureDuration !== 'number' || lectureDuration < 30 || lectureDuration > 180) {
+      errors.push('lectureDuration must be a number between 30 and 180');
+    }
   }
   
-  if (typeof data.labDuration !== 'number' || data.labDuration < 30 || data.labDuration > 240) {
+  if (!data || typeof data !== 'object' || !('labDuration' in data)) {
     errors.push('labDuration must be a number between 30 and 240');
+  } else {
+    const labDuration = (data as { labDuration: number }).labDuration;
+    if (typeof labDuration !== 'number' || labDuration < 30 || labDuration > 240) {
+      errors.push('labDuration must be a number between 30 and 240');
+    }
   }
   
-  if (typeof data.notifSound !== 'boolean') {
+  if (!data || typeof data !== 'object' || !('notifSound' in data)) {
     errors.push('notifSound must be a boolean');
+  } else {
+    const notifSound = (data as { notifSound: boolean }).notifSound;
+    if (typeof notifSound !== 'boolean') {
+      errors.push('notifSound must be a boolean');
+    }
   }
   
-  if (!['12h', '24h'].includes(data.timeFormat)) {
+  if (!data || typeof data !== 'object' || !('timeFormat' in data)) {
     errors.push('timeFormat must be either "12h" or "24h"');
+  } else {
+    const timeFormat = (data as { timeFormat: string }).timeFormat;
+    if (!['12h', '24h'].includes(timeFormat)) {
+      errors.push('timeFormat must be either "12h" or "24h"');
+    }
   }
   
-  if (!['light', 'dark', 'system'].includes(data.theme)) {
+  if (!data || typeof data !== 'object' || !('theme' in data)) {
     errors.push('theme must be either "light", "dark", or "system"');
+  } else {
+    const theme = (data as { theme: string }).theme;
+    if (!['light', 'dark', 'system'].includes(theme)) {
+      errors.push('theme must be either "light", "dark", or "system"');
+    }
   }
   
   return { isValid: errors.length === 0, errors };
 }
 
 export async function GET(req: NextRequest) {
-  try {
-    await connectToDatabase();
-    const { searchParams } = new URL(req.url);
-    const user_id = searchParams.get("user_id");
-    
-    if (!user_id) {
-      return NextResponse.json({ 
-        error: "Missing user_id parameter" 
-      }, { status: 400 });
-    }
-    
-    const setting = await getSetting(user_id);
-    
-    if (!setting) {
-      return NextResponse.json({ 
-        error: "Settings not found for this user" 
-      }, { status: 404 });
-    }
-    
-    return NextResponse.json(setting);
-  } catch (error) {
-    console.error('Error fetching settings:', error);
-    return NextResponse.json({ 
-      error: "Internal server error while fetching settings" 
-    }, { status: 500 });
-  }
+  await connectToDatabase();
+  const { searchParams } = new URL(req.url);
+  const user_id = searchParams.get("user_id");
+  if (!user_id) return NextResponse.json({ error: "Missing user_id" }, { status: 400 });
+  const setting = await Setting.findOne({ user_id }) as unknown;
+  return NextResponse.json(setting);
 }
 
 export async function POST(req: NextRequest) {

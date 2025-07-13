@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { getTasks, addTask, updateTask, deleteTask, Task, Priority } from "../../services/todoService";
 import { getCourses, Course } from "../../services/attendanceService";
 import { useSession } from "next-auth/react";

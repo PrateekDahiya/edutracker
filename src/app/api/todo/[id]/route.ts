@@ -3,8 +3,8 @@ import { connectToDatabase } from "@/models/db";
 import { Task } from "@/models/Task";
 import { addActivity } from "@/services/activityService";
 
-export async function GET(_req: NextRequest, context: any) {
-  const { params } = await context;
+export async function GET(_req: NextRequest, context: unknown) {
+  const { params } = context as { params: { id: string } };
   const { id } = params;
   await connectToDatabase();
   const record = await Task.findById(id);
@@ -12,8 +12,8 @@ export async function GET(_req: NextRequest, context: any) {
   return NextResponse.json(record);
 }
 
-export async function PUT(req: NextRequest, context: any) {
-  const { params } = await context;
+export async function PUT(req: NextRequest, context: unknown) {
+  const { params } = context as { params: { id: string } };
   await connectToDatabase();
   const data = await req.json();
   const updated = await Task.findByIdAndUpdate(params.id, data, { new: true });
@@ -30,8 +30,8 @@ export async function PUT(req: NextRequest, context: any) {
   return NextResponse.json(updated);
 }
 
-export async function DELETE(_req: NextRequest, context: any) {
-  const { params } = await context;
+export async function DELETE(_req: NextRequest, context: unknown) {
+  const { params } = context as { params: { id: string } };
   const { id } = params;
   await connectToDatabase();
   const deleted = await Task.findByIdAndDelete(id);

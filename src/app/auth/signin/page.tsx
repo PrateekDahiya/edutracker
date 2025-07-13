@@ -34,7 +34,7 @@ export default function SignIn() {
       } else if (res?.ok) {
         window.location.href = "/";
       }
-    } catch (err) {
+    } catch {
       setError("An error occurred. Please try again.");
     } finally {
       setLoading(false);
