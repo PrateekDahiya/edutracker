@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
 import { useSettings } from "../components/SettingsProvider";
+import type { Settings } from "../components/SettingsProvider";
 import { useAlert } from "../components/AlertPopup";
 
 export default function Settings() {
@@ -33,7 +34,7 @@ export default function Settings() {
   }
   }, [settings]);
 
-  async function saveSettingsToDB(newSettings: any) {
+  async function saveSettingsToDB(newSettings: Settings) {
     const res = await fetch("/api/setting", {
       method: "POST",
       headers: { "Content-Type": "application/json" },

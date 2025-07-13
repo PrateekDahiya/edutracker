@@ -4,6 +4,6 @@ export async function getUserByEmail(email: string) {
   return await User.findOne({ email });
 }
  
-export async function updateUserProfile(email: string, updates: any) {
+export async function updateUserProfile(email: string, updates: Record<string, unknown>) {
   return await User.findOneAndUpdate({ email }, updates, { new: true });
 } 

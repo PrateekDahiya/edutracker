@@ -80,7 +80,7 @@ export default function Schedule() {
             oscillator.start(audioContext.currentTime);
             oscillator.stop(audioContext.currentTime + 0.3);
         } catch (error) {
-            console.log('Could not play notification sound:', error);
+            // console.log('Could not play notification sound:', error);
         }
     }
 

@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function SignUp() {
   const [email, setEmail] = useState("");
@@ -52,10 +53,13 @@ export default function SignUp() {
         
         {/* Logo and Header */}
         <div className="flex flex-col items-center mb-6 sm:mb-8 group">
-          <img 
+          <Image 
             src="/logo.png" 
             alt="EduTrack Logo" 
+            width={64}
+            height={64}
             className="w-12 h-12 sm:w-16 sm:h-16 mb-3 sm:mb-4 group-hover:scale-110 transition-transform duration-300" 
+            priority
           />
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--primary)] mb-1 sm:mb-2 group-hover:text-[var(--primary)]/80 transition-colors duration-300">EduTrack</h1>
           <span className="text-base sm:text-lg text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors duration-300">Create your account</span>

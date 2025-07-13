@@ -27,7 +27,6 @@ export const authOptions: NextAuthOptions = {
           await connectToDatabase();
           
           if (!credentials?.email || !credentials?.password) {
-            console.log("Missing credentials");
             return null;
           }
 
@@ -35,13 +34,11 @@ export const authOptions: NextAuthOptions = {
           const user = await User.findOne({ email: credentials.email });
           
           if (!user) {
-            console.log("User not found:", credentials.email);
             return null;
           }
 
           // Check if user has a password (Google users might not have one)
           if (!user.password) {
-            console.log("User has no password (Google account)");
             return null;
           }
 
@@ -49,11 +46,9 @@ export const authOptions: NextAuthOptions = {
           const isValid = await bcrypt.compare(credentials.password, user.password);
           
           if (!isValid) {
-            console.log("Invalid password for user:", credentials.email);
             return null;
           }
 
-          console.log("Authentication successful for:", credentials.email);
           return { 
             id: user._id.toString(), 
             email: user.email, 
