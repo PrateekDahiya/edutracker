@@ -1,0 +1,127 @@
+@import "tailwindcss";
+
+/* Core layout resets */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE 10+ */
+}
+html::-webkit-scrollbar, body::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Enable dark variant class strategy */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* ✅ Light theme - applied by default */
+:root {
+  /* Backgrounds */
+  --bg-dark: hsl(220 59% 91%);
+  --bg: hsl(220 100% 97%);
+  --bg-light: hsl(220 100% 100%);
+  --overlay: hsla(220, 10%, 60%, 0.5);
+
+  /* Text */
+  --text: hsl(226 85% 7%);
+  --text-muted: hsl(220 26% 31%);
+  --highlight: hsl(220 100% 100%);
+  --link: hsl(220 60% 40%);
+  --link-hover: hsl(220 60% 55%);
+
+  /* Borders */
+  --border: hsl(220 19% 53%);
+  --border-muted: hsl(220 27% 65%);
+  --focus-ring: hsl(220 40% 40%);
+
+  /* Primary UI Colors */
+  --primary: hsl(221 49% 33%);
+  --secondary: hsl(44 100% 14%);
+  --danger: hsl(9 21% 41%);
+  --warning: hsl(52 23% 34%);
+  --success: hsl(147 19% 36%);
+  --info: hsl(217 22% 41%);
+
+  /* Inputs */
+  --input-bg: var(--bg-light);
+  --input-border: var(--border-muted);
+  --input-placeholder: var(--text-muted);
+
+  /* Shadows */
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  --shadow-elevated: 0 10px 15px rgba(0, 0, 0, 0.08);
+
+  /* Code Highlighting */
+  --code-bg: hsl(220 90% 98%);
+  --code-text: hsl(226 50% 20%);
+  --code-comment: hsl(220 10% 50%);
+  --code-keyword: hsl(286 60% 45%);
+  --code-function: hsl(200 60% 40%);
+
+  /* Buttons */
+  --btn-bg: var(--primary);
+  --btn-text: hsl(220 100% 98%);
+  --btn-hover-bg: hsl(221 49% 43%);
+  --btn-hover-text: hsl(220 100% 98%);
+}
+
+/* ✅ Dark theme override */
+  .dark {
+    --bg-dark: hsl(228 79% 2%);
+    --bg: hsl(222 55% 5%);
+    --bg-light: hsl(220 35% 10%);
+    --overlay: hsla(220, 20%, 10%, 0.6);
+
+    --text: hsl(220 100% 98%);
+    --text-muted: hsl(220 35% 73%);
+    --highlight: hsl(220 20% 42%);
+    --link: hsl(220 90% 65%);
+    --link-hover: hsl(220 100% 75%);
+
+    --border: hsl(220 26% 31%);
+    --border-muted: hsl(220 37% 20%);
+    --focus-ring: hsl(220 90% 70%);
+
+    --primary: hsl(220 78% 76%);
+    --secondary: hsl(40 53% 60%);
+    --danger: hsl(9 26% 64%);
+    --warning: hsl(52 19% 57%);
+    --success: hsl(146 17% 59%);
+    --info: hsl(217 28% 65%);
+
+    --input-bg: var(--bg-light);
+    --input-border: var(--border-muted);
+    --input-placeholder: var(--text-muted);
+
+    --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    --shadow-elevated: 0 10px 15px rgba(0, 0, 0, 0.15);
+
+    --code-bg: hsl(220 10% 10%);
+    --code-text: hsl(220 80% 85%);
+    --code-comment: hsl(220 20% 60%);
+    --code-keyword: hsl(286 60% 70%);
+    --code-function: hsl(200 60% 70%);
+
+    --btn-bg: var(--primary);
+    --btn-text: hsl(220 100% 10%);
+    --btn-hover-bg: hsl(220 78% 86%);
+    --btn-hover-text: hsl(220 100% 10%);
+  }
+
+
+/* ✅ Nice transitions */
+@layer base {
+  @media (prefers-reduced-motion: no-preference) {
+    html,
+    body {
+      @apply transition-colors duration-300 ease-in;
+    }
+  }
+}
