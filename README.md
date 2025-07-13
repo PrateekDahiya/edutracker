@@ -4,13 +4,14 @@ EduTracker is a modern, fully responsive student productivity and attendance tra
 
 ## Features
 
-- 📱 **Fully Responsive**: Works seamlessly on all devices, from 300px mobile screens to large desktops.
-- 🌓 **Theme Support**: Easily switch between light and dark themes. All UI elements use CSS variables for consistent theming.
+
 - 📅 **Schedule & Attendance**: Track your classes, mark attendance, and view weekly or daily schedules.
 - ✅ **To-Do List**: Organize tasks by course, set priorities, and mark completion.
 - 🏆 **Dashboard & Activity**: See stats, upcoming classes/tasks, and a timeline of your activity.
 - 🔒 **Authentication**: Secure sign up/sign in with credentials or Google.
 - ⚡ **Fast & Modern**: Built with Next.js App Router, Tailwind CSS, and best practices for performance and accessibility.
+- 📱 **Fully Responsive**: Works seamlessly on all devices, from 300px mobile screens to large desktops.
+- 🌓 **Theme Support**: Easily switch between light and dark themes. All UI elements use CSS variables for consistent theming.
 
 ## Getting Started
 
@@ -89,17 +90,5 @@ To add or customize a theme, edit the CSS variables in `globals.css` or your the
 | `--btn-hover-bg`      | btn-hover    |
 | `--btn-hover-text`    | btn-hover-tx |
 
-## Learn More
 
-To learn more about Next.js, take a look at the following resources:
 
--   [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
--   [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
