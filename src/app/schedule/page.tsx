@@ -293,7 +293,7 @@ export default function Schedule() {
     // Handle form field change
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
         const { name, value } = e.target;
-        let update: any = { [name]: value };
+        let update: Record<string, unknown> = { [name]: value };
         if (name === "type") {
             // Auto-calculate end time
             const duration = getDefaultDuration(value as ClassType);

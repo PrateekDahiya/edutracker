@@ -1,9 +1,9 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { getCourses } from "../../services/attendanceService";
-import { getClasses } from "../../services/scheduleService";
-import { getTasks } from "../../services/todoService";
+import { getCourses, Course } from "../../services/attendanceService";
+import { getClasses, Class } from "../../services/scheduleService";
+import { getTasks, Task } from "../../services/todoService";
 import { useSettings } from "../components/SettingsProvider";
 
 // Cache utility functions
@@ -14,9 +14,9 @@ const CACHE_KEYS = {
 };
 
 interface CachedData {
-  courses: any[];
-  classes: any[];
-  tasks: any[];
+  courses: Course[];
+  classes: Class[];
+  tasks: Task[];
   timestamp: number;
 }
 
@@ -70,8 +70,8 @@ export default function Dashboard() {
     tasksDue: 0,
     belowRequired: 0,
   });
-  const [nextClass, setNextClass] = useState<any>(null);
-  const [upcomingTask, setUpcomingTask] = useState<any>(null);
+  const [nextClass, setNextClass] = useState<Class | null>(null);
+  const [upcomingTask, setUpcomingTask] = useState<Task | null>(null);
   const [attendanceData, setAttendanceData] = useState<Array<{
     courseName: string;
     percentage: number;
@@ -119,22 +119,22 @@ export default function Dashboard() {
   }
 
   // Function to process data and update state
-  const processData = useCallback((courses: any[], classes: any[], tasks: any[]) => {
+  const processData = useCallback((courses: Course[], classes: Class[], tasks: Task[]) => {
     const today = new Date();
     const todayStr = today.toISOString().slice(0, 10);
     
-    const classesToday = classes.filter((cls: any) => {
+    const classesToday = classes.filter((cls) => {
       const weekday = ["sunday","monday","tuesday","wednesday","thursday","friday","saturday"][today.getDay()];
       return cls.day === weekday;
     });
     
-    const tasksDue = tasks.filter((t: any) => {
+    const tasksDue = tasks.filter((t) => {
       if (!t.due) return false;
       const dueDate = new Date(t.due);
       return dueDate.toISOString().slice(0, 10) === todayStr;
     });
     
-    const belowRequired = courses.filter((c: any) => {
+    const belowRequired = courses.filter((c) => {
       const percent = (c.at_class / (c.t_class || 1)) * 100;
       return percent < c.required;
     });
@@ -147,27 +147,18 @@ export default function Dashboard() {
     });
 
     // Next class calculation
-    let nextCls = null;
+    let nextCls: Class | null = null;
     const now = new Date();
     const currentTime = now.getHours() * 60 + now.getMinutes(); // Current time in minutes
     
-    const todayClasses = classesToday.map((cls: any) => {
-      // Parse the start time
+    const todayClasses = classesToday.map((cls) => {
       let [time, ampm] = cls.startTime.split(" ");
       let [h, m] = time.split(":").map(Number);
-      
-      // Convert to 24-hour format
       if (ampm === "PM" && h !== 12) h += 12;
       if (ampm === "AM" && h === 12) h = 0;
-      
-      const classTimeMinutes = h * 60 + m; // Class time in minutes
-      
-      return { 
-        ...cls, 
-        classTimeMinutes,
-        isToday: true
-      };
-    }).filter((cls: any) => cls.classTimeMinutes > currentTime); // Only future classes today
+      const classTimeMinutes = h * 60 + m;
+      return { ...(cls as Class), classTimeMinutes, isToday: true } as Class & { classTimeMinutes: number; isToday: boolean };
+    }).filter((cls) => (cls as { classTimeMinutes: number }).classTimeMinutes > currentTime);
     
     if (todayClasses.length > 0) {
       // Sort by time (earliest first)
@@ -185,10 +176,10 @@ export default function Dashboard() {
         
         if (checkDay === "sunday" || checkDay === "saturday") continue; // Skip weekends
         
-        const classesOnDay = classes.filter((cls: any) => cls.day === checkDay);
+        const classesOnDay = classes.filter((cls) => cls.day === checkDay);
         if (classesOnDay.length > 0) {
           // Sort by time and take the first one
-          const sortedClasses = classesOnDay.map((cls: any) => {
+          const sortedClasses = classesOnDay.map((cls) => {
             let [time, ampm] = cls.startTime.split(" ");
             let [h, m] = time.split(":").map(Number);
             if (ampm === "PM" && h !== 12) h += 12;
@@ -204,16 +195,16 @@ export default function Dashboard() {
     setNextClass(nextCls);
 
     // Upcoming task calculation
-    let nextTask = null;
-    const futureTasks = tasks.filter((t: any) => t.due && new Date(t.due) > now && !t.completed);
+    let nextTask: Task | null = null;
+    const futureTasks = tasks.filter((t) => t.due && new Date(t.due) > now && !t.completed);
     if (futureTasks.length > 0) {
-      futureTasks.sort((a: any, b: any) => new Date(a.due).getTime() - new Date(b.due).getTime());
+      futureTasks.sort((a, b) => new Date(a.due).getTime() - new Date(b.due).getTime());
       nextTask = futureTasks[0];
     }
     setUpcomingTask(nextTask);
 
     // Attendance chart data
-    const attendanceChartData = courses.map((c: any) => ({
+    const attendanceChartData = courses.map((c) => ({
       courseName: c.course_name,
       percentage: Math.round((c.at_class / (c.t_class || 1)) * 100),
       attended: c.at_class,
@@ -223,7 +214,7 @@ export default function Dashboard() {
     setAttendanceData(attendanceChartData);
 
     // Task completion
-    const completed = tasks.filter((t: any) => t.completed).length;
+    const completed = tasks.filter((t) => t.completed).length;
     setTaskCompletion(tasks.length ? Math.round((completed / tasks.length) * 100) : 0);
   }, [settings]);
 
@@ -480,7 +471,7 @@ export default function Dashboard() {
           </span>
           <span className="text-xs sm:text-sm text-[var(--text-muted)] group-hover:text-[var(--primary)] transition-colors duration-300 animate-fadein">
             {nextClass ? (
-              nextClass.isToday ? 
+              (nextClass as any).isToday ? 
                 `${formatTime(nextClass.startTime)} • ${nextClass.room}` :
                 `${nextClass.day.charAt(0).toUpperCase() + nextClass.day.slice(1)} • ${formatTime(nextClass.startTime)} • ${nextClass.room}`
             ) : "-"}
