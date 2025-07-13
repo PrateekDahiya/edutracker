@@ -152,7 +152,7 @@ export default function Dashboard() {
     const currentTime = now.getHours() * 60 + now.getMinutes(); // Current time in minutes
     
     const todayClasses = classesToday.map((cls) => {
-      let [time, ampm] = cls.startTime.split(" ");
+      const [time, ampm] = cls.startTime.split(" ");
       let [h, m] = time.split(":").map(Number);
       if (ampm === "PM" && h !== 12) h += 12;
       if (ampm === "AM" && h === 12) h = 0;
@@ -162,7 +162,7 @@ export default function Dashboard() {
     
     if (todayClasses.length > 0) {
       // Sort by time (earliest first)
-      todayClasses.sort((a: any, b: any) => a.classTimeMinutes - b.classTimeMinutes);
+      todayClasses.sort((a: Class & { classTimeMinutes: number }, b: Class & { classTimeMinutes: number }) => a.classTimeMinutes - b.classTimeMinutes);
       nextCls = todayClasses[0];
     } else {
       // If no classes today, find the next class in the week
@@ -173,20 +173,17 @@ export default function Dashboard() {
       for (let i = 1; i <= 7; i++) {
         const checkDayIndex = (currentDayIndex + i) % 7;
         const checkDay = weekdays[checkDayIndex];
-        
         if (checkDay === "sunday" || checkDay === "saturday") continue; // Skip weekends
-        
         const classesOnDay = classes.filter((cls) => cls.day === checkDay);
         if (classesOnDay.length > 0) {
           // Sort by time and take the first one
           const sortedClasses = classesOnDay.map((cls) => {
-            let [time, ampm] = cls.startTime.split(" ");
+            const [time, ampm] = cls.startTime.split(" ");
             let [h, m] = time.split(":").map(Number);
             if (ampm === "PM" && h !== 12) h += 12;
             if (ampm === "AM" && h === 12) h = 0;
             return { ...cls, classTimeMinutes: h * 60 + m };
-          }).sort((a: any, b: any) => a.classTimeMinutes - b.classTimeMinutes);
-          
+          }).sort((a: Class & { classTimeMinutes: number }, b: Class & { classTimeMinutes: number }) => a.classTimeMinutes - b.classTimeMinutes);
           nextCls = sortedClasses[0];
           break;
         }

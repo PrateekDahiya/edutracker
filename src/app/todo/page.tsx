@@ -319,6 +319,7 @@ export default function ToDo() {
         const date = new Date(dateString);
         let hours = date.getHours();
         let minutes = date.getMinutes();
+        // These can be const since not reassigned
         const pad = (n: number) => n.toString().padStart(2, "0");
         if (settings.timeFormat === "24h") {
             return `${pad(hours)}:${pad(minutes)}`;

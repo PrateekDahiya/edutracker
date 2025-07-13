@@ -293,7 +293,7 @@ export default function Schedule() {
     // Handle form field change
     function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
         const { name, value } = e.target;
-        let update: Record<string, unknown> = { [name]: value };
+        const update: Record<string, unknown> = { [name]: value };
         if (name === "type") {
             // Auto-calculate end time
             const duration = getDefaultDuration(value as ClassType);
@@ -332,7 +332,7 @@ export default function Schedule() {
                 user_id: session?.user?.email || "",
                 course_id: form.course_id || "",
                 courseName: form.courseName!,
-                day: form.day as any,
+                day: form.day as Class["day"],
                 startTime: form.startTime!,
                 endTime,
                 type: form.type as ClassType,
@@ -347,7 +347,7 @@ export default function Schedule() {
                 user_id: session?.user?.email || "",
                 course_id: form.course_id || "",
                     courseName: form.courseName!,
-                    day: form.day as any,
+                    day: form.day as Class["day"],
                     startTime: form.startTime!,
                     endTime,
                     type: form.type as ClassType,
