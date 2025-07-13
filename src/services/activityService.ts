@@ -15,7 +15,7 @@ export async function addActivity(activity: ActivityInput) {
 }
 
 export async function getActivities(user_id: string, type?: ActivityType | "all") {
-  const query: any = { user_id };
+  const query: Record<string, unknown> = { user_id };
   if (type && type !== "all") query.type = type;
   return await Activity.find(query).sort({ time: -1 });
 } 

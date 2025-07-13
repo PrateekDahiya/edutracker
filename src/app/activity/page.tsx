@@ -4,6 +4,14 @@ import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import LoadingSpinner from "../components/LoadingSpinner";
 
+interface Activity {
+  _id?: string;
+  type: string;
+  status?: string;
+  label: string;
+  time?: string;
+}
+
 const filters = [
   { label: "All", value: "all" },
   { label: "Attendance", value: "attendance" },
@@ -13,7 +21,7 @@ const filters = [
 export default function Activity() {
   const { data: session } = useSession();
   const [filter, setFilter] = useState("all");
-  const [activities, setActivities] = useState<any[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
