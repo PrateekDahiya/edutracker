@@ -76,7 +76,11 @@ If a user asks for help, always guide them to the right place and explain how to
         ] }),
       });
       const data = await res.json();
-      const aiReply = data.content || "Sorry, I didn't understand that.";
+      let aiReply = data.content || "Sorry, I didn't understand that.";
+      // If not authenticated and AI suggests an action, append login reminder
+      if (!isAuthenticated && /\b(add|edit|update|mark|complete|delete|create|schedule|attendance|task|class|profile|todo)\b/i.test(aiReply)) {
+        aiReply += '\n\n*You need to log in to perform actions like adding, editing, or updating your data.*';
+      }
       // Remove 'thinking...' message before typewriter
       setMessages(prev => prev.filter(m => m.content !== 'EduTrack AI is thinking...'));
       setTyping(true);
@@ -203,10 +207,6 @@ If a user asks for help, always guide them to the right place and explain how to
             className="flex gap-2 mt-2"
             onSubmit={e => {
               e.preventDefault();
-              if (!isAuthenticated) {
-                showAlert('You need to log in to chat with the AI about your data or use app features.', 'warning');
-                return;
-              }
               if (input.trim()) {
                 sendMessage(input.trim());
                 setInput('');
