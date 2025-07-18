@@ -10,6 +10,7 @@ const AttendanceSchema = new Schema({
   required: { type: Number, required: true },
   at_class: { type: Number, required: true },
   t_class: { type: Number, required: true },
+  semester_id: { type: String, required: true },
 });
 
 export const Attendance = mongoose.models.Attendance || model("Attendance", AttendanceSchema); 

@@ -63,7 +63,7 @@ function clearCache(userEmail: string): void {
 
 export default function Dashboard() {
   const { data: session } = useSession();
-  const { settings, loading: settingsLoading } = useSettings();
+  const { settings } = useSettings();
   const [stats, setStats] = useState({
     courses: 0,
     classesToday: 0,
@@ -80,6 +80,7 @@ export default function Dashboard() {
     required: number;
   }>>([]);
   const [taskCompletion, setTaskCompletion] = useState(0);
+  const [tasks, setTasks] = useState<Task[]>([]); // <-- Add this line
   const [showCharts, setShowCharts] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
@@ -145,6 +146,7 @@ export default function Dashboard() {
       tasksDue: tasksDue.length,
       belowRequired: belowRequired.length,
     });
+    setTasks(tasks); // <-- Add this line
 
     // Next class calculation
     let nextCls: Class | null = null;
@@ -213,7 +215,7 @@ export default function Dashboard() {
     // Task completion
     const completed = tasks.filter((t) => t.completed).length;
     setTaskCompletion(tasks.length ? Math.round((completed / tasks.length) * 100) : 0);
-  }, [settings]);
+  }, []);
 
   // Function to fetch data from API
   const fetchDataFromAPI = useCallback(async (userEmail: string) => {
@@ -468,7 +470,7 @@ export default function Dashboard() {
           </span>
           <span className="text-xs sm:text-sm text-[var(--text-muted)] group-hover:text-[var(--primary)] transition-colors duration-300 animate-fadein">
             {nextClass ? (
-              (nextClass as any).isToday ? 
+              (nextClass as Class & { isToday: boolean }).isToday ? 
                 `${formatTime(nextClass.startTime)} • ${nextClass.room}` :
                 `${nextClass.day.charAt(0).toUpperCase() + nextClass.day.slice(1)} • ${formatTime(nextClass.startTime)} • ${nextClass.room}`
             ) : "-"}
@@ -487,37 +489,41 @@ export default function Dashboard() {
 
       {/* Charts Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        {/* Attendance Overview as Vertical Bar Graph */}
         <div className={`bg-[var(--bg-light)] rounded-xl p-4 sm:p-6 shadow flex flex-col group transition-transform duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer transition-all duration-700 ${showCharts ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <span className="font-bold text-sm sm:text-base text-[var(--text)] mb-3 sm:mb-4">Attendance Overview</span>
           {attendanceData.length > 0 ? (
-            <div className="space-y-3 sm:space-y-4">
+            <div className="flex items-end justify-center gap-3 sm:gap-5 h-40 sm:h-56 w-full px-2 mt-6 sm:mt-8 relative">
               {attendanceData.map((course, i) => (
-                <div key={i} className="group/item">
-                  <div className="flex justify-between items-center mb-1 sm:mb-2">
-                    <span className="text-xs sm:text-sm font-medium text-[var(--text)] truncate max-w-[60%]">
-                      {course.courseName}
-                    </span>
-                    <span className={`text-xs sm:text-sm font-bold ${
+                <div key={i} className="flex flex-col items-center w-12 sm:w-16 group/item">
+                  {/* Bar */}
+                  <div className="relative flex items-end w-full h-32 sm:h-44">
+                    <div
+                      className={`w-full rounded-t-lg transition-all duration-700 ${
+                        course.percentage >= course.required ? 'bg-[var(--success)]' : 'bg-[var(--danger)]'
+                      } animate-barGrow`}
+                      style={{
+                        height: showCharts ? `${course.percentage}%` : '0%',
+                        minHeight: '8px',
+                        transitionDelay: `${i * 0.1}s`,
+                        maxHeight: '100%',
+                      }}
+                    ></div>
+                    {/* Percentage label above bar, with extra space to avoid cutoff */}
+                    <span className={`absolute -top-8 left-1/2 -translate-x-1/2 text-xs sm:text-sm font-bold ${
                       course.percentage >= course.required ? 'text-[var(--success)]' : 'text-[var(--danger)]'
                     }`}>
                       {course.percentage}%
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2 overflow-hidden">
-                    <div
-                      className={`h-full rounded-full transition-all duration-700 ${
-                        course.percentage >= course.required ? 'bg-[var(--success)]' : 'bg-[var(--danger)]'
-                      }`}
-                      style={{ 
-                        width: showCharts ? `${course.percentage}%` : '0%',
-                        transitionDelay: `${i * 0.1}s`
-                      }}
-                    ></div>
-                  </div>
-                  <div className="flex justify-between text-xs text-[var(--text-muted)] mt-1">
-                    <span>{course.attended}/{course.total} classes</span>
-                    <span>Required: {course.required}%</span>
-                  </div>
+                  {/* Course name below bar */}
+                  <span className="mt-2 text-xs sm:text-sm font-medium text-[var(--text)] truncate text-center max-w-full" title={course.courseName}>
+                    {course.courseName}
+                  </span>
+                  {/* Attended/total below name */}
+                  <span className="text-[10px] sm:text-xs text-[var(--text-muted)] text-center">{course.attended}/{course.total}</span>
+                  {/* Required % below attended/total */}
+                  <span className="text-[10px] sm:text-xs text-[var(--text-muted)] text-center">Req: {course.required}%</span>
                 </div>
               ))}
             </div>
@@ -527,6 +533,7 @@ export default function Dashboard() {
             </div>
           )}
         </div>
+        {/* Task Completion Pie Chart (unchanged) */}
         <div className={`bg-[var(--bg-light)] rounded-xl p-4 sm:p-6 shadow flex flex-col items-center group transition-transform duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer transition-all duration-700 ${showCharts ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
           <span className="font-bold text-sm sm:text-base text-[var(--text)] mb-2">Task Completion</span>
           {/* Pie chart */}
@@ -538,6 +545,37 @@ export default function Dashboard() {
             <span className="absolute inset-0 flex items-center justify-center text-sm sm:text-lg font-bold text-[var(--success)] animate-pop">
               {taskCompletion}%
             </span>
+          </div>
+          {/* Pending Tasks List */}
+          <div className="w-full mt-4">
+            <span className="block text-xs sm:text-sm font-semibold text-[var(--text-muted)] mb-1 text-center">Pending Tasks</span>
+            {(() => {
+              // Get up to 5 pending tasks, sorted by due date (soonest first, undated last)
+              const pendingTasks = tasks
+                .filter((t) => !t.completed)
+                .sort((a, b) => {
+                  if (a.due && b.due) return new Date(a.due).getTime() - new Date(b.due).getTime();
+                  if (a.due) return -1;
+                  if (b.due) return 1;
+                  return 0;
+                })
+                .slice(0, 5);
+              if (pendingTasks.length === 0) {
+                return <div className="text-xs text-[var(--text-muted)] text-center py-2">All tasks completed! 🎉</div>;
+              }
+              return (
+                <ul className="flex flex-col gap-1">
+                  {pendingTasks.map((task) => (
+                    <li key={task._id || task.title} className="flex items-center justify-between px-2 py-1 rounded hover:bg-[var(--bg)] transition-colors text-xs sm:text-sm">
+                      <span className="truncate max-w-[60%]" title={task.title}>{task.title}</span>
+                      <span className="text-[var(--text-muted)] ml-2 whitespace-nowrap">
+                        {task.due ? new Date(task.due).toLocaleDateString() : ''}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              );
+            })()}
           </div>
         </div>
       </div>

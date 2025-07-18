@@ -11,6 +11,7 @@ const ClassSchema = new Schema({
   instructor: { type: String },
   room: { type: String, required: true },
   color: { type: String },
+  semester_id: { type: String, required: true },
 });
 
 export const Class = mongoose.models.Class || model("Class", ClassSchema); 

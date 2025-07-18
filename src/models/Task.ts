@@ -9,6 +9,7 @@ const TaskSchema = new Schema({
   priority: { type: String, enum: ["high", "medium", "low"], required: true },
   due: { type: Date, required: true },
   completed: { type: Boolean, default: false },
+  semester_id: { type: String, required: true },
 });
 
 export const Task = mongoose.models.Task || model("Task", TaskSchema); 

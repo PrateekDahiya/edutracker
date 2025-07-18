@@ -1,5 +1,3 @@
-import { addActivity } from "./activityService";
-
 export type Priority = 'high' | 'medium' | 'low';
 export type Task = {
     _id?: string;
@@ -15,17 +13,17 @@ export type Task = {
 
 const API_URL = '/api/todo';
 
-export async function getTasks(user_id: string): Promise<Task[]> {
-    const res = await fetch(`${API_URL}?user_id=${encodeURIComponent(user_id)}`);
+export async function getTasks(user_id: string, semester_id: string): Promise<Task[]> {
+    const res = await fetch(`${API_URL}?user_id=${encodeURIComponent(user_id)}&semester_id=${encodeURIComponent(semester_id)}`);
     if (!res.ok) throw new Error('Failed to fetch tasks');
     return res.json();
 }
 
-export async function addTask(task: Omit<Task, '_id'>): Promise<Task> {
+export async function addTask(task: Omit<Task, '_id'>, semester_id: string): Promise<Task> {
     const res = await fetch(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(task),
+        body: JSON.stringify({ ...task, semester_id }),
     });
     if (!res.ok) throw new Error('Failed to add task');
     return res.json();

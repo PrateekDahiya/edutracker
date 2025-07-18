@@ -5,12 +5,15 @@ import { useEffect, useState } from "react";
 import ThemeToggle from "../ThemeToggle";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 export default function Header() {
     const { data: session, status } = useSession();
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const pathname = usePathname();
+    const router = useRouter();
 
     useEffect(() => {
         if (status === "authenticated") setIsAuthenticated(true);
@@ -77,17 +80,22 @@ export default function Header() {
                     ) : isAuthenticated ? (
                         <>
                             <Link href="/profile" className="flex items-center gap-2 sm:gap-3 p-1 sm:p-2 rounded-xl hover:bg-[var(--bg)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer group">
-                                <img
+                                <Image
                                     src={session?.user?.image || "/profile-placeholder.png"}
                                     alt="avatar"
+                                    width={40}
+                                    height={40}
                                     className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl border-2 border-[var(--primary)] object-cover group-hover:border-[var(--primary)]/80 transition-all duration-200"
                                 />
                                 <span className="hidden lg:inline text-[var(--text)] font-semibold truncate max-w-[100px] group-hover:text-[var(--primary)] transition-colors duration-200">
-                                    {session?.user?.name || session?.user?.email}
+                                    {session?.user?.name || session?.user?.email?.split('@')[0]}
                                 </span>
                             </Link>
                             <button
-                                onClick={() => signOut()}
+                                onClick={async () => {
+                                    await signOut({ redirect: false });
+                                    router.push('/');
+                                }}
                                 className="h-8 sm:h-10 px-2 sm:px-4 py-1 sm:py-2 rounded-xl bg-[var(--danger)] text-white text-xs sm:text-sm font-semibold cursor-pointer shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 ring-2 ring-transparent focus:ring-[var(--danger)]"
                             >
                                 <span className="hidden sm:inline">Sign Out</span>

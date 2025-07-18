@@ -116,12 +116,16 @@ export default function Attendance() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const { showAlert, AlertComponent } = useAlert();
   const { showConfirm, ConfirmComponent } = useConfirm();
+  const [settings, setSettings] = useState<any>(null);
+
+  const semester_id = settings?.semesterStart && settings?.semesterEnd ? `${settings.semesterStart}_${settings.semesterEnd}` : '';
+  const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
 
   // Function to fetch data from API
   const fetchDataFromAPI = useCallback(async (userEmail: string) => {
     setLoading(true);
     try {
-      const coursesData = await getCourses(userEmail);
+      const coursesData = await getCourses(userEmail, semester_id);
 
       const cachedData: CachedData = {
         courses: coursesData,
@@ -139,7 +143,7 @@ export default function Attendance() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [semester_id]);
 
   // Function to load data (from cache or API)
   const loadData = useCallback(async (userEmail: string) => {
@@ -227,8 +231,8 @@ export default function Attendance() {
         if (userEmail) clearCache(userEmail);
         showAlert("Course updated successfully!", "success");
       } else {
-        if (!session?.user?.email) return;
-        const created = await addCourse({ ...form, user_id: session.user.email });
+        if (!session?.user?.email || !semester_id) return;
+        const created = await addCourse({ ...form, user_id: user_id }, semester_id);
         setCourses((prev) => [...prev, created]);
         // Clear cache to force fresh data
         clearCache(session.user.email);
@@ -302,6 +306,21 @@ export default function Attendance() {
     ? courses.filter((c) => getAttendancePercent(c) < filter)
     : courses;
 
+  if (!semester_id) {
+    return (
+      <div className="max-w-2xl mx-auto p-4 text-center text-[var(--text-muted)]">
+        <h2 className="text-xl font-bold mb-4">Attendance Tracker</h2>
+        <p className="mb-4">To add or view courses, please set your semester start and end dates in your <a href="/profile" className="text-[var(--primary)] underline">profile</a>.</p>
+        <button
+          className="px-4 py-2 rounded-xl bg-[var(--btn-bg)] text-[var(--btn-text)] font-semibold shadow-lg opacity-50 cursor-not-allowed"
+          disabled
+        >
+          Add Course
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-5xl mx-auto p-2 sm:p-4">
       {/* Header Section */}
@@ -333,6 +352,7 @@ export default function Attendance() {
           </select>
           <button
             onClick={openAddModal}
+            disabled={!semester_id}
             className="px-3 sm:px-4 py-2 rounded-xl bg-[var(--btn-bg)] text-[var(--btn-text)] text-sm sm:text-base font-semibold cursor-pointer shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 ring-2 ring-transparent focus:ring-[var(--primary)] order-4"
           >
             Add Course

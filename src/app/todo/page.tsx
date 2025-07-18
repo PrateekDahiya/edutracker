@@ -69,9 +69,16 @@ const priorities: { label: string; value: Priority; color: string }[] = [
     { label: 'Low', value: 'low', color: 'green' },
 ];
 
+// Helper for priority color
+const priorityStyles = {
+  high: 'border-l-2 border-red-300 shadow-[inset_8px_0_16px_-8px_rgba(239,68,68,0.06)]',
+  medium: 'border-l-2 border-yellow-200 shadow-[inset_8px_0_16px_-8px_rgba(251,191,36,0.04)]',
+  low: 'border-l-2 border-green-200 shadow-[inset_8px_0_16px_-8px_rgba(34,197,94,0.04)]',
+};
+
 export default function ToDo() {
     const { data: session } = useSession();
-    const { settings, loading: settingsLoading } = useSettings();
+    const { settings } = useSettings();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [form, setForm] = useState({
         title: '',
@@ -83,7 +90,6 @@ export default function ToDo() {
     });
     const [expanded, setExpanded] = useState<{ [course: string]: boolean }>({});
     const [showAll, setShowAll] = useState(false);
-    const [compact, setCompact] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [courses, setCourses] = useState<Course[]>([]);
     const [filter, setFilter] = useState<'all' | 'completed' | 'incomplete'>('all');
@@ -92,13 +98,16 @@ export default function ToDo() {
     const { showAlert, AlertComponent } = useAlert();
     const { showConfirm, ConfirmComponent } = useConfirm();
 
+    const semester_id = settings?.semesterStart && settings?.semesterEnd ? `${settings.semesterStart}_${settings.semesterEnd}` : '';
+    const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
+
     // Function to fetch data from API
     const fetchDataFromAPI = useCallback(async (userEmail: string) => {
         setLoading(true);
         try {
             const [tasksData, coursesData] = await Promise.all([
-                getTasks(userEmail),
-                getCourses(userEmail)
+                getTasks(userEmail, semester_id),
+                getCourses(userEmail, semester_id)
             ]);
             
             const cachedData: CachedData = {
@@ -119,7 +128,7 @@ export default function ToDo() {
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [semester_id]);
 
     // Function to load data (from cache or API)
     const loadData = useCallback(async (userEmail: string) => {
@@ -189,9 +198,9 @@ export default function ToDo() {
     }
     async function handleAdd(e: React.FormEvent) {
         e.preventDefault();
-        if (!form.title || !form.course || !form.course_id || !form.due || !session?.user?.email) return;
+        if (!form.title || !form.course || !form.course_id || !form.due || !session?.user?.email || !semester_id) return;
         const newTask: Omit<Task, '_id'> = {
-            user_id: session.user.email,
+            user_id: user_id,
             course_id: form.course_id,
             course: form.course,
             title: form.title,
@@ -200,7 +209,7 @@ export default function ToDo() {
             due: form.due,
             completed: false,
         };
-        const created = await addTask(newTask);
+        const created = await addTask(newTask, semester_id);
         setTasks(prev => [...prev, created]);
         // Clear cache to force fresh data
         clearCache(session.user.email);
@@ -263,12 +272,6 @@ export default function ToDo() {
         setExpanded(prev => ({ ...prev, [course]: !prev[course] }));
     }
 
-    // For displaying current time, use state
-    const [now, setNow] = useState<Date | null>(null);
-    useEffect(() => {
-        setNow(new Date());
-    }, []);
-
     // Filtered tasks
     const filteredTasks = tasks.filter(t => {
         if (filter === 'all') return true;
@@ -298,27 +301,12 @@ export default function ToDo() {
     // Unified view
     const allTasks: Task[] = [...tasks].sort(sortTasks);
 
-    // Helper: 12-hour to 24-hour
-    function to24Hour(time12h: string) {
-        const [time, modifier] = time12h.split(" ");
-        let [hours, minutes] = time.split(":").map(Number);
-        if (modifier === "PM" && hours !== 12) hours += 12;
-        if (modifier === "AM" && hours === 12) hours = 0;
-        return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
-    }
-    // Helper: 24-hour to 12-hour
-    function to12Hour(time24: string) {
-        let [h, m] = time24.split(":").map(Number);
-        const ampm = h >= 12 ? "PM" : "AM";
-        h = h % 12 || 12;
-        return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}` + ` ${ampm}`;
-    }
     // Helper: format time for display based on settings
     function formatTime(dateString: string) {
         if (!settings) return dateString;
         const date = new Date(dateString);
         let hours = date.getHours();
-        let minutes = date.getMinutes();
+        const minutes = date.getMinutes();
         // These can be const since not reassigned
         const pad = (n: number) => n.toString().padStart(2, "0");
         if (settings.timeFormat === "24h") {
@@ -490,14 +478,14 @@ export default function ToDo() {
                             {expanded[group.course] !== false && (
                                 <div className="divide-y divide-[var(--border-muted)]">
                                     {group.tasks.map(task => (
-                                        <div key={task._id} className={`flex flex-col md:flex-row md:items-center gap-2 p-3 sm:p-4 ${isOverdue(task) ? 'border-l-4 border-[var(--danger)]' : ''} ${task.completed ? 'opacity-50' : ''} group hover:scale-[1.03] hover:shadow-2xl transition cursor-pointer bg-[var(--bg-light)] rounded-xl`}>
+                                        <div key={task._id} className={`flex flex-col md:flex-row md:items-center gap-2 p-3 sm:p-4 ${priorityStyles[task.priority]} ${task.completed ? 'opacity-50' : ''} group hover:scale-[1.03] shadow-lg transition cursor-pointer bg-[var(--bg-light)] rounded-xl`}>
                                             <div className="flex-1">
                                                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
                                                     <span className={`font-bold ${task.completed ? 'line-through' : ''} text-[var(--text)] text-base sm:text-lg`}>{task.title}</span>
                                                     <span className={`ml-0 sm:ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-${priorities.find(p => p.value === task.priority)?.color}-500/20 text-${priorities.find(p => p.value === task.priority)?.color}-700`}>{priorities.find(p => p.value === task.priority)?.label}</span>
                                                     <span className="ml-0 sm:ml-2 text-xs text-[var(--text-muted)]" suppressHydrationWarning={true}>{typeof window !== 'undefined' ? formatTime(task.due) : ''}</span>
                                                 </div>
-                                                {!compact && !task.completed && <div className="text-[var(--text-muted)] text-xs sm:text-sm mt-1">{task.description}</div>}
+                                                {!task.completed && <div className="text-[var(--text-muted)] text-xs sm:text-sm mt-1">{task.description}</div>}
                                             </div>
                                             <div className="flex flex-col sm:flex-row gap-2 items-start sm:items-center">
                                                 {typeof task._id === 'string' && (!task.completed ? (
@@ -519,14 +507,14 @@ export default function ToDo() {
             ) : (
                 <div className="space-y-2">
                     {allTasks.map(task => (
-                        <div key={task._id} className={`flex flex-col md:flex-row md:items-center gap-2 p-4 bg-[var(--bg-light)] rounded-xl shadow ${isOverdue(task) ? 'border-l-4 border-[var(--danger)]' : ''} ${task.completed ? 'opacity-50' : ''} group hover:scale-[1.03] hover:shadow-2xl transition cursor-pointer`}>
+                        <div key={task._id} className={`flex flex-col md:flex-row md:items-center gap-2 p-4 bg-[var(--bg-light)] rounded-xl shadow-lg ${priorityStyles[task.priority]} ${task.completed ? 'opacity-50' : ''} group hover:scale-[1.03] transition cursor-pointer`}>
                             <div className="flex-1">
                                 <div className="flex items-center gap-2">
                                     <span className={`font-bold ${task.completed ? 'line-through' : ''} text-[var(--text)]`}>{task.title}</span>
                                     <span className={`ml-2 px-2 py-0.5 rounded text-xs font-semibold bg-${priorities.find(p => p.value === task.priority)?.color}-500/20 text-${priorities.find(p => p.value === task.priority)?.color}-700`}>{priorities.find(p => p.value === task.priority)?.label}</span>
                                     <span className="ml-2 text-xs text-[var(--text-muted)]" suppressHydrationWarning={true}>{typeof window !== 'undefined' ? formatTime(task.due) : ''}</span>
                                 </div>
-                                {!compact && !task.completed && <div className="text-[var(--text-muted)] text-sm mt-1">{task.description}</div>}
+                                {!task.completed && <div className="text-[var(--text-muted)] text-sm mt-1">{task.description}</div>}
                             </div>
                             <div className="flex gap-2 items-center">
                                 {typeof task._id === 'string' && (!task.completed ? (

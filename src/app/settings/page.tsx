@@ -1,14 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
 import { useSettings } from "../components/SettingsProvider";
 import type { Settings } from "../components/SettingsProvider";
 import { useAlert } from "../components/AlertPopup";
 
 export default function Settings() {
-  const { settings, setSettings, loading, error, refreshSettings } = useSettings();
-  const { theme, setTheme } = useTheme();
+  const { settings, setSettings, loading, refreshSettings } = useSettings();
   const { showAlert, AlertComponent } = useAlert();
   const [showReset, setShowReset] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -54,7 +52,7 @@ export default function Settings() {
       semesterEnd,
       notifSound,
       timeFormat: timeFormat as '12h' | '24h',
-      theme: (theme || "light") as 'light' | 'dark' | 'system',
+      theme: (settings.theme || "light") as 'light' | 'dark' | 'system',
     };
     await saveSettingsToDB(newSettings);
     setSettings(newSettings);
@@ -116,19 +114,7 @@ export default function Settings() {
         </div>
       )}
       
-      {error && (
-        <div className="mb-6 p-6 bg-[var(--danger)]/10 border border-[var(--danger)] rounded-2xl shadow-lg">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">⚠️</span>
-          <div>
-              <div className="text-[var(--danger)] font-semibold text-lg">Error loading settings</div>
-              <div className="text-[var(--danger)]/80">{error}</div>
-            </div>
-          </div>
-        </div>
-      )}
-      
-      {!loading && !error && (
+      {settings && (
         <form onSubmit={handleSave} className="space-y-8">
           {/* Class Duration Settings */}
           <div className="bg-[var(--bg-light)] rounded-2xl border border-[var(--border)] shadow-lg overflow-hidden hover:shadow-2xl hover:scale-[1.01] transition-all duration-300 cursor-pointer">

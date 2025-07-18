@@ -5,6 +5,7 @@ const CourseSchema = new Schema({
   course_name: { type: String, required: true },
   instructor: { type: String, required: true },
   type: { type: String, enum: ["lecture", "lab"], required: true },
+  semester_id: { type: String, required: true },
 });
 
 export const Course = model("Course", CourseSchema); 

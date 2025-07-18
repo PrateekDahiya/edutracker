@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest, context: unknown) {
 }
 
 export async function PUT(req: NextRequest, context: unknown) {
-  const { params } = context as { params: { id: string } };
+  const { params } = await context;
   await connectToDatabase();
   const data = await req.json();
   const updated = await Task.findByIdAndUpdate(params.id, data, { new: true });
@@ -21,9 +21,10 @@ export async function PUT(req: NextRequest, context: unknown) {
   if (data.completed === true) {
     await addActivity({
       user_id: updated.user_id,
-      type: "task",
-      label: `Completed: ${updated.title}`,
+      type: "todo",
+      label: `Completed task: ${updated.title}`,
       time: new Date(),
+      status: "completed",
       related_id: updated._id,
     });
   }

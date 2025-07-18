@@ -65,7 +65,7 @@ export const authOptions: NextAuthOptions = {
   session: { strategy: "jwt" },
   secret: process.env.NEXTAUTH_SECRET,
   callbacks: {
-    async session({ session, token }) {
+    async session({ session }) {
       try {
         // Always fetch the latest user data from the database
         if (session.user?.email) {
@@ -74,7 +74,7 @@ export const authOptions: NextAuthOptions = {
           if (user) {
             session.user.name = user.name;
             session.user.image = user.image;
-            (session.user as any).college = user.college;
+            (session.user as unknown as { college: string }).college = user.college;
           }
         }
       } catch (error) {

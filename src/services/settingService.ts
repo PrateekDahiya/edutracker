@@ -18,7 +18,7 @@ export async function getSetting(user_id: string) {
 export async function saveSetting(setting: SettingType) {
   return await Setting.findOneAndUpdate(
     { user_id: setting.user_id },
-    setting,
+    { $set: setting },
     { upsert: true, new: true }
   );
 } 

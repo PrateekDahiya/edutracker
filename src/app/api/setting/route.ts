@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/models/db";
-import { getSetting, saveSetting, SettingType } from "@/services/settingService";
+import { saveSetting, SettingType } from "@/services/settingService";
 import Setting from "@/models/Setting";
 
 // Validation function for settings
@@ -67,8 +67,9 @@ function validateSettings(data: unknown): { isValid: boolean; errors: string[] }
 export async function GET(req: NextRequest) {
   await connectToDatabase();
   const { searchParams } = new URL(req.url);
-  const user_id = searchParams.get("user_id");
+  let user_id = searchParams.get("user_id");
   if (!user_id) return NextResponse.json({ error: "Missing user_id" }, { status: 400 });
+  user_id = user_id.split('@')[0];
   const setting = await Setting.findOne({ user_id }) as unknown;
   return NextResponse.json(setting);
 }
@@ -77,15 +78,25 @@ export async function POST(req: NextRequest) {
   try {
     await connectToDatabase();
     const data = await req.json();
-    
-    // Validate required fields
     if (!data.user_id) {
-      return NextResponse.json({ 
-        error: "Missing user_id" 
-      }, { status: 400 });
+      return NextResponse.json({ error: "Missing user_id" }, { status: 400 });
     }
-    
-    // Validate settings data
+    const user_id = data.user_id.split('@')[0];
+
+    // If only updating semesterStart/semesterEnd, allow partial update
+    if ('semesterStart' in data || 'semesterEnd' in data) {
+      const update: any = {};
+      if ('semesterStart' in data) update.semesterStart = data.semesterStart;
+      if ('semesterEnd' in data) update.semesterEnd = data.semesterEnd;
+      const saved = await Setting.findOneAndUpdate(
+        { user_id },
+        { $set: update },
+        { upsert: true, new: true }
+      );
+      return NextResponse.json(saved);
+    }
+
+    // Otherwise, do full validation
     const validation = validateSettings(data);
     if (!validation.isValid) {
       return NextResponse.json({ 
@@ -93,15 +104,15 @@ export async function POST(req: NextRequest) {
         details: validation.errors 
       }, { status: 400 });
     }
-    
-    const saved = await saveSetting(data as SettingType);
-    
+
+    const saved = await saveSetting({ ...data, user_id } as SettingType);
+
     if (!saved) {
       return NextResponse.json({ 
         error: "Failed to save settings" 
       }, { status: 500 });
     }
-    
+
     return NextResponse.json(saved);
   } catch (error) {
     console.error('Error saving settings:', error);

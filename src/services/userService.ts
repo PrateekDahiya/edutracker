@@ -5,5 +5,6 @@ export async function getUserByEmail(email: string) {
 }
  
 export async function updateUserProfile(email: string, updates: Record<string, unknown>) {
-  return await User.findOneAndUpdate({ email }, updates, { new: true });
+  const user_id = (updates.user_id as string) || (email ? email.split('@')[0] : '');
+  return await User.findOneAndUpdate({ email }, { ...updates, user_id }, { new: true });
 } 

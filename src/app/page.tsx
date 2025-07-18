@@ -1,6 +1,5 @@
 "use client";
 import Link from "next/link";
-import ThemeToggle from "./ThemeToggle";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 
@@ -12,13 +11,11 @@ const features = [
 ];
 
 export default function Landing() {
-  const [currentYear, setCurrentYear] = useState(1970);
   const [mounted, setMounted] = useState(false);
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
 
   useEffect(() => {
     setMounted(true);
-    setCurrentYear(new Date().getFullYear());
   }, []);
 
   return (
