@@ -62,7 +62,7 @@ function clearCache(userEmail: string): void {
 }
 
 export default function Dashboard() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { settings } = useSettings();
   const [stats, setStats] = useState({
     courses: 0,
@@ -364,6 +364,11 @@ export default function Dashboard() {
     localStorage.removeItem('counterStartDate');
     localStorage.removeItem('counterIsRunning');
   };
+
+  if (status === 'loading') return null;
+  if (!session) {
+    return <div className="min-h-screen flex items-center justify-center text-xl font-bold text-[var(--danger)]">You must be logged in to access the dashboard.</div>;
+  }
 
   return (
     <div className="max-w-4xl mx-auto p-2 sm:p-4">

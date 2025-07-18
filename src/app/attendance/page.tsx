@@ -106,7 +106,11 @@ const defaultForm = {
 };
 
 export default function Attendance() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  if (status === 'loading') return null;
+  if (!session) {
+    return <div className="min-h-screen flex items-center justify-center text-xl font-bold text-[var(--danger)]">You must be logged in to access attendance.</div>;
+  }
   const [courses, setCourses] = useState<Course[]>([]);
   const [filter, setFilter] = useState<number>(0); // 0 = all
   const [showModal, setShowModal] = useState(false);

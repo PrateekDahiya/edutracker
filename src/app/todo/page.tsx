@@ -77,7 +77,7 @@ const priorityStyles = {
 };
 
 export default function ToDo() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const { settings } = useSettings();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [form, setForm] = useState({
@@ -316,6 +316,11 @@ export default function ToDo() {
             hours = hours % 12 || 12;
             return `${pad(hours)}:${pad(minutes)} ${ampm}`;
         }
+    }
+
+    if (status === 'loading') return null;
+    if (!session) {
+      return <div className="min-h-screen flex items-center justify-center text-xl font-bold text-[var(--danger)]">You must be logged in to access your tasks.</div>;
     }
 
     return (

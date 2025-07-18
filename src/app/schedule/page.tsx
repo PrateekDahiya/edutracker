@@ -9,7 +9,7 @@ import { useConfirm } from "../components/ConfirmDialog";
 import { useSettings } from "../components/SettingsProvider";
 
 export default function Schedule() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const { settings } = useSettings();
     // Persistent state for classes
     const [classes, setClasses] = useState<Class[]>([]);
@@ -28,6 +28,11 @@ export default function Schedule() {
     const [loading, setLoading] = useState(true);
     const { showAlert, AlertComponent } = useAlert();
     const { showConfirm, ConfirmComponent } = useConfirm();
+
+    if (status === 'loading') return null;
+    if (!session) {
+        return <div className="min-h-screen flex items-center justify-center text-xl font-bold text-[var(--danger)]">You must be logged in to access the schedule.</div>;
+    }
 
     const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
     const semester_id = settings?.semesterStart && settings?.semesterEnd ? `${settings.semesterStart}_${settings.semesterEnd}` : '';
