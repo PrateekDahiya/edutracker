@@ -361,6 +361,14 @@ export default function Dashboard() {
     localStorage.removeItem('counterIsRunning');
   };
 
+  if (!session || !session.user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl text-[var(--danger)] font-bold">Please log in to access the dashboard.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="max-w-4xl mx-auto p-2 sm:p-4">
       {/* Header Section */}

@@ -20,6 +20,13 @@ const filters = [
 
 export default function Activity() {
   const { data: session } = useSession();
+  if (!session || !session.user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl text-[var(--danger)] font-bold">Please log in to view your activity.</div>
+      </div>
+    );
+  }
   const [filter, setFilter] = useState("all");
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);

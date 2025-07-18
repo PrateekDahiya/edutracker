@@ -486,13 +486,18 @@ export default function Schedule() {
         }
     }
 
+    if (!session || !session.user) {
+      return (
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-xl text-[var(--danger)] font-bold">Please log in to access your schedule.</div>
+        </div>
+      );
+    }
+
     if (loading) {
         return <div className="flex items-center justify-center min-h-[60vh]"><LoadingSpinner /></div>;
     }
-    // After loading, if classes.length === 0, show a message
-    if (!loading && classes.length === 0) {
-        return <div className="flex items-center justify-center min-h-[60vh] text-lg text-[var(--text-muted)]">No classes found for this semester.</div>;
-    }
+   
 
     return (
         <div className="max-w-4xl mx-auto p-2 sm:p-4">

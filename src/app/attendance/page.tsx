@@ -119,6 +119,14 @@ export default function Attendance() {
   const { showConfirm, ConfirmComponent } = useConfirm();
   const { settings } = useSettings();
 
+  if (!session || !session.user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl text-[var(--danger)] font-bold">Please log in to access attendance.</div>
+      </div>
+    );
+  }
+
   const semester_id = settings?.semesterStart && settings?.semesterEnd ? `${settings.semesterStart}_${settings.semesterEnd}` : '';
   const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
 

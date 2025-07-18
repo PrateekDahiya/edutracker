@@ -3,6 +3,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import logo from '../../../public/logo.png';
+import { useSession } from "next-auth/react";
 
 // Types for chat messages and steps
 type ChatRole = 'user' | 'assistant' | 'system';
@@ -24,6 +25,7 @@ const AIAgent: React.FC = () => {
   const [typedMessage, setTypedMessage] = useState<string | null>(null);
   const router = useRouter();
   const chatRef = useRef<HTMLDivElement>(null);
+  const { data: session } = useSession();
 
   // Auto-scroll to bottom on new message or typing
   useEffect(() => {
@@ -136,19 +138,37 @@ If a user asks for help, always guide them to the right place and explain how to
           <div className="flex gap-3 justify-center mb-2">
             <button
               className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white font-semibold shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] border border-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer"
-              onClick={() => { setOpen(false); router.push('/todo?add=1'); }}
+              onClick={() => {
+                if (!session || !session.user) {
+                  alert('Please log in to add a task.');
+                  return;
+                }
+                setOpen(false); router.push('/todo?add=1');
+              }}
             >
               Add Task
             </button>
             <button
               className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white font-semibold shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] border border-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer"
-              onClick={() => { setOpen(false); router.push('/schedule?add=1'); }}
+              onClick={() => {
+                if (!session || !session.user) {
+                  alert('Please log in to add a class.');
+                  return;
+                }
+                setOpen(false); router.push('/schedule?add=1');
+              }}
             >
               Add Class
             </button>
             <button
               className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white font-semibold shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] border border-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer"
-              onClick={() => { setOpen(false); router.push('/attendance?update=1'); }}
+              onClick={() => {
+                if (!session || !session.user) {
+                  alert('Please log in to update attendance.');
+                  return;
+                }
+                setOpen(false); router.push('/attendance?update=1');
+              }}
             >
               Update Attendance
             </button>
