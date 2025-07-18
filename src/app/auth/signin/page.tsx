@@ -1,11 +1,12 @@
 "use client";
+import { Suspense } from "react";
 import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import Image from "next/image";
 
-export default function SignIn() {
+function SignInInner() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -22,14 +23,12 @@ export default function SignIn() {
     e.preventDefault();
     setError("");
     setLoading(true);
-    
     try {
       const res = await signIn("credentials", {
         email,
         password,
         redirect: false,
       });
-      
       if (res?.error) {
         setError("Invalid email or password");
       } else if (res?.ok) {
@@ -45,7 +44,6 @@ export default function SignIn() {
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-2 sm:p-4">
       <div className={`bg-[var(--bg-light)] p-4 sm:p-6 md:p-8 rounded-2xl shadow-2xl flex flex-col items-center w-full max-w-md border border-[var(--border)] transition-all duration-700 ${mounted ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'}`}>
-        
         {/* Logo and Header */}
         <div className="flex flex-col items-center mb-6 sm:mb-8 group">
           <Image 
@@ -59,7 +57,6 @@ export default function SignIn() {
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--primary)] mb-1 sm:mb-2 group-hover:text-[var(--primary)]/80 transition-colors duration-300">EduTrack</h1>
           <span className="text-base sm:text-lg text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors duration-300">Sign in to your account</span>
         </div>
-
         {/* Form */}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4 sm:gap-6 w-full">
           <div className="flex flex-col gap-1 sm:gap-2 group">
@@ -72,7 +69,6 @@ export default function SignIn() {
               required
             />
           </div>
-          
           <div className="flex flex-col gap-1 sm:gap-2 group">
             <input
               type="password"
@@ -83,7 +79,6 @@ export default function SignIn() {
               required
             />
           </div>
-          
           <button 
             type="submit" 
             disabled={loading}
@@ -91,14 +86,12 @@ export default function SignIn() {
           >
             {loading ? "Signing In..." : "Sign In"}
           </button>
-          
           {error && (
             <div className="text-[var(--danger)] text-center text-sm sm:text-base font-semibold mt-2 p-2 sm:p-3 rounded-xl bg-[var(--danger)]/10 border border-[var(--danger)]/20 animate-fadein">
               {error}
             </div>
           )}
         </form>
-
         {/* Google Sign In */}
         <button
           onClick={() => signIn("google", { callbackUrl })}
@@ -108,7 +101,6 @@ export default function SignIn() {
             Sign in with Google
           </span>
         </button>
-
         {/* Sign Up Link */}
         <div className="mt-6 sm:mt-8 text-center text-[var(--text-muted)] text-sm sm:text-base">
           Don&apos;t have an account?{' '}
@@ -121,5 +113,13 @@ export default function SignIn() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignIn() {
+  return (
+    <Suspense>
+      <SignInInner />
+    </Suspense>
   );
 } 

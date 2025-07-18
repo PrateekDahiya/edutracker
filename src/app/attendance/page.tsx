@@ -8,10 +8,10 @@ import {
   Course,
 } from "../../services/attendanceService";
 import { useSession } from "next-auth/react";
+import { useSettings } from "../components/SettingsProvider";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAlert } from "../components/AlertPopup";
 import { useConfirm } from "../components/ConfirmDialog";
-import { useSettings } from "../components/SettingsProvider";
 
 // Cache utility functions
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -107,12 +107,7 @@ const defaultForm = {
 };
 
 export default function Attendance() {
-  const { data: session, status } = useSession();
-  if (status === 'loading') return null;
-  if (!session) {
-    return <div className="min-h-screen flex items-center justify-center text-xl font-bold text-[var(--danger)]">You must be logged in to access attendance.</div>;
-  }
-  const { settings } = useSettings();
+  const { data: session } = useSession();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filter, setFilter] = useState<number>(0); // 0 = all
   const [showModal, setShowModal] = useState(false);
@@ -122,15 +117,16 @@ export default function Attendance() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const { showAlert, AlertComponent } = useAlert();
   const { showConfirm, ConfirmComponent } = useConfirm();
+  const { settings } = useSettings();
 
   const semester_id = settings?.semesterStart && settings?.semesterEnd ? `${settings.semesterStart}_${settings.semesterEnd}` : '';
-  const user_id = (session?.user as any)?.user_id || (session?.user?.email ? session.user.email.split('@')[0] : '');
+  const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
 
   // Function to fetch data from API
-  const fetchDataFromAPI = useCallback(async (userEmail: string) => {
+  const fetchDataFromAPI = useCallback(async (userId: string) => {
     setLoading(true);
     try {
-      const coursesData = await getCourses(user_id, semester_id);
+      const coursesData = await getCourses(userId, semester_id);
 
       const cachedData: CachedData = {
         courses: coursesData,
@@ -138,7 +134,7 @@ export default function Attendance() {
       };
 
       // Store in cache
-      setCachedData(userEmail, cachedData);
+      setCachedData(userId, cachedData);
 
       // Update state
       setCourses(coursesData);
@@ -148,12 +144,12 @@ export default function Attendance() {
     } finally {
       setLoading(false);
     }
-  }, [semester_id, user_id]);
+  }, [semester_id]);
 
   // Function to load data (from cache or API)
-  const loadData = useCallback(async (userEmail: string) => {
+  const loadData = useCallback(async (userId: string) => {
     // Try to get cached data first
-    const cachedData = getCachedData(userEmail);
+    const cachedData = getCachedData(userId);
 
     if (cachedData) {
       // Use cached data
@@ -164,42 +160,35 @@ export default function Attendance() {
       const now = Date.now();
       if (now - cachedData.timestamp > 3 * 60 * 1000) {
         // Fetch fresh data in background
-        fetchDataFromAPI(userEmail);
+        fetchDataFromAPI(userId);
       }
     } else {
       // No cache or expired, fetch from API
-      await fetchDataFromAPI(userEmail);
+      await fetchDataFromAPI(userId);
     }
   }, [fetchDataFromAPI]);
 
   // Main effect to load data
   useEffect(() => {
-    const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (!userEmail) return;
-
-    loadData(userEmail);
-  }, [session, loadData]);
+    if (!user_id) return;
+    loadData(user_id);
+  }, [user_id, loadData]);
 
   // Function to force refresh (for manual refresh)
   const forceRefresh = useCallback(() => {
-    const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (!userEmail) return;
-
-    clearCache(userEmail);
-    fetchDataFromAPI(userEmail);
-  }, [session, fetchDataFromAPI]);
+    if (!user_id) return;
+    clearCache(user_id);
+    fetchDataFromAPI(user_id);
+  }, [user_id, fetchDataFromAPI]);
 
   // Set up periodic refresh (every 10 minutes)
   useEffect(() => {
-    const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (!userEmail) return;
-
+    if (!user_id) return;
     const interval = setInterval(() => {
-      fetchDataFromAPI(userEmail);
+      fetchDataFromAPI(user_id);
     }, 10 * 60 * 1000); // 10 minutes
-
     return () => clearInterval(interval);
-  }, [session, fetchDataFromAPI]);
+  }, [user_id, fetchDataFromAPI]);
 
   // Handlers
   function openAddModal() {
@@ -232,15 +221,14 @@ export default function Attendance() {
         const updated = await updateCourse(editing._id, { ...form });
         setCourses((prev) => prev.map((c) => (c._id === updated._id ? updated : c)));
         // Clear cache to force fresh data
-        const userEmail = session?.user?.email;
-        if (userEmail) clearCache(userEmail);
+        if (user_id) clearCache(user_id);
         showAlert("Course updated successfully!", "success");
       } else {
-        if (!session?.user?.email || !semester_id) return;
+        if (!user_id || !semester_id) return;
         const created = await addCourse({ ...form, user_id: user_id }, semester_id);
         setCourses((prev) => [...prev, created]);
         // Clear cache to force fresh data
-        clearCache(session.user.email);
+        clearCache(user_id);
         showAlert("Course added successfully!", "success");
       }
       closeModal();
@@ -259,8 +247,7 @@ export default function Attendance() {
           .then(() => {
             setCourses((prev) => prev.filter((c) => c._id !== id));
             // Clear cache to force fresh data
-            const userEmail = session?.user?.email;
-            if (userEmail) clearCache(userEmail);
+            if (user_id) clearCache(user_id);
             showAlert("Course deleted successfully!", "success");
           })
           .catch(() => {
@@ -285,8 +272,7 @@ export default function Attendance() {
       });
       setCourses((prev) => prev.map((c) => (c._id === updated._id ? updated : c)));
       // Clear cache to force fresh data
-      const userEmail = session?.user?.email;
-      if (userEmail) clearCache(userEmail);
+      if (user_id) clearCache(user_id);
     } finally {
       setLoading(false);
     }
@@ -299,8 +285,7 @@ export default function Attendance() {
       });
       setCourses((prev) => prev.map((c) => (c._id === updated._id ? updated : c)));
       // Clear cache to force fresh data
-      const userEmail = session?.user?.email;
-      if (userEmail) clearCache(userEmail);
+      if (user_id) clearCache(user_id);
     } finally {
       setLoading(false);
     }
@@ -439,8 +424,7 @@ export default function Attendance() {
                       const updated = await updateCourse(course._id!, { required: Number(e.target.value) });
                       setCourses((prev) => prev.map((c) => (c._id === updated._id ? updated : c)));
                       // Clear cache to force fresh data
-                      const userEmail = session?.user?.email;
-                      if (userEmail) clearCache(userEmail);
+                      if (user_id) clearCache(user_id);
                     }}
                     className="w-14 sm:w-16 p-1 rounded border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)] text-xs"
                   />

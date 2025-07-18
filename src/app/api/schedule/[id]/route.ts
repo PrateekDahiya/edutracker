@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/models/db";
 import { Class } from "@/models/Class";
 
-export async function GET(_req: NextRequest, context: { params: { id: string } }) {
+export async function GET(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   await connectToDatabase();
   const record = await Class.findById(id);
@@ -10,7 +10,7 @@ export async function GET(_req: NextRequest, context: { params: { id: string } }
   return NextResponse.json(record);
 }
 
-export async function PUT(req: NextRequest, context: { params: { id: string } }) {
+export async function PUT(req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   await connectToDatabase();
   const data = await req.json();
@@ -19,7 +19,7 @@ export async function PUT(req: NextRequest, context: { params: { id: string } })
   return NextResponse.json(updated);
 }
 
-export async function DELETE(_req: NextRequest, context: { params: { id: string } }) {
+export async function DELETE(_req: NextRequest, context: { params: Promise<{ id: string }> }) {
   const { id } = await context.params;
   await connectToDatabase();
   const deleted = await Class.findByIdAndDelete(id);

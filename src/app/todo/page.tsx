@@ -77,7 +77,7 @@ const priorityStyles = {
 };
 
 export default function ToDo() {
-    const { data: session, status } = useSession();
+    const { data: session } = useSession();
     const { settings } = useSettings();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [form, setForm] = useState({
@@ -99,15 +99,15 @@ export default function ToDo() {
     const { showConfirm, ConfirmComponent } = useConfirm();
 
     const semester_id = settings?.semesterStart && settings?.semesterEnd ? `${settings.semesterStart}_${settings.semesterEnd}` : '';
-    const user_id = (session?.user as any)?.user_id || (session?.user?.email ? session.user.email.split('@')[0] : '');
+    const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
 
     // Function to fetch data from API
-    const fetchDataFromAPI = useCallback(async (userEmail: string) => {
+    const fetchDataFromAPI = useCallback(async (userId: string) => {
         setLoading(true);
         try {
             const [tasksData, coursesData] = await Promise.all([
-                getTasks(userEmail, semester_id),
-                getCourses(userEmail, semester_id)
+                getTasks(userId, semester_id),
+                getCourses(userId, semester_id)
             ]);
             
             const cachedData: CachedData = {
@@ -117,7 +117,7 @@ export default function ToDo() {
             };
 
             // Store in cache
-            setCachedData(userEmail, cachedData);
+            setCachedData(userId, cachedData);
             
             // Update state
             setTasks(tasksData);
@@ -131,9 +131,9 @@ export default function ToDo() {
     }, [semester_id]);
 
     // Function to load data (from cache or API)
-    const loadData = useCallback(async (userEmail: string) => {
+    const loadData = useCallback(async (userId: string) => {
         // Try to get cached data first
-        const cachedData = getCachedData(userEmail);
+        const cachedData = getCachedData(userId);
         
         if (cachedData) {
             // Use cached data
@@ -146,42 +146,35 @@ export default function ToDo() {
             const now = Date.now();
             if (now - cachedData.timestamp > 3 * 60 * 1000) {
                 // Fetch fresh data in background
-                fetchDataFromAPI(userEmail);
+                fetchDataFromAPI(userId);
             }
         } else {
             // No cache or expired, fetch from API
-            await fetchDataFromAPI(userEmail);
+            await fetchDataFromAPI(userId);
         }
     }, [fetchDataFromAPI]);
 
     // Main effect to load data
     useEffect(() => {
-        const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-        if (!userEmail) return;
-        
-        loadData(userEmail);
-    }, [session, loadData]);
+        if (!user_id) return;
+        loadData(user_id);
+    }, [user_id, loadData]);
 
     // Function to force refresh (for manual refresh)
     const forceRefresh = useCallback(() => {
-        const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-        if (!userEmail) return;
-        
-        clearCache(userEmail);
-        fetchDataFromAPI(userEmail);
-    }, [session, fetchDataFromAPI]);
+        if (!user_id) return;
+        clearCache(user_id);
+        fetchDataFromAPI(user_id);
+    }, [user_id, fetchDataFromAPI]);
 
     // Set up periodic refresh (every 10 minutes)
     useEffect(() => {
-        const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-        if (!userEmail) return;
-
+        if (!user_id) return;
         const interval = setInterval(() => {
-            fetchDataFromAPI(userEmail);
+            fetchDataFromAPI(user_id);
         }, 10 * 60 * 1000); // 10 minutes
-
         return () => clearInterval(interval);
-    }, [session, fetchDataFromAPI]);
+    }, [user_id, fetchDataFromAPI]);
 
     function openModal() {
         setForm({ title: '', description: '', course: '', course_id: '', priority: 'medium', due: '' });
@@ -209,10 +202,10 @@ export default function ToDo() {
             due: form.due,
             completed: false,
         };
-        const created = await addTask(newTask, user_id, semester_id);
+        const created = await addTask(newTask, semester_id);
         setTasks(prev => [...prev, created]);
         // Clear cache to force fresh data
-        clearCache(session.user.email);
+        clearCache(user_id);
         closeModal();
     }
     async function toggleComplete(id: string) {
@@ -221,8 +214,7 @@ export default function ToDo() {
         const updated = await updateTask(id, { completed: !task.completed });
         setTasks(prev => prev.map(t => t._id === id ? updated : t));
         // Clear cache to force fresh data
-        const userEmail = session?.user?.email;
-        if (userEmail) clearCache(userEmail);
+        if (user_id) clearCache(user_id);
     }
     async function handleUndo(id: string) {
         const task = tasks.find(t => t._id === id);
@@ -230,8 +222,7 @@ export default function ToDo() {
         const updated = await updateTask(id, { completed: false });
         setTasks(prev => prev.map(t => t._id === id ? updated : t));
         // Clear cache to force fresh data
-        const userEmail = session?.user?.email;
-        if (userEmail) clearCache(userEmail);
+        if (user_id) clearCache(user_id);
     }
 
     async function handleDelete(id: string) {
@@ -245,8 +236,7 @@ export default function ToDo() {
                     await deleteTask(id);
                     setTasks(prev => prev.filter(t => t._id !== id));
                     // Clear cache to force fresh data
-                    const userEmail = session?.user?.email;
-                    if (userEmail) clearCache(userEmail);
+                    if (user_id) clearCache(user_id);
                     showAlert("Task deleted successfully!", "success");
                 } catch (err) {
                     showAlert("Error deleting task", "error");
@@ -316,11 +306,6 @@ export default function ToDo() {
             hours = hours % 12 || 12;
             return `${pad(hours)}:${pad(minutes)} ${ampm}`;
         }
-    }
-
-    if (status === 'loading') return null;
-    if (!session) {
-      return <div className="min-h-screen flex items-center justify-center text-xl font-bold text-[var(--danger)]">You must be logged in to access your tasks.</div>;
     }
 
     return (

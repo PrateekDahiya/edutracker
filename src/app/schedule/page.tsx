@@ -9,7 +9,7 @@ import { useConfirm } from "../components/ConfirmDialog";
 import { useSettings } from "../components/SettingsProvider";
 
 export default function Schedule() {
-    const { data: session, status } = useSession();
+    const { data: session } = useSession();
     const { settings } = useSettings();
     // Persistent state for classes
     const [classes, setClasses] = useState<Class[]>([]);
@@ -28,11 +28,6 @@ export default function Schedule() {
     const [loading, setLoading] = useState(true);
     const { showAlert, AlertComponent } = useAlert();
     const { showConfirm, ConfirmComponent } = useConfirm();
-
-    if (status === 'loading') return null;
-    if (!session) {
-        return <div className="min-h-screen flex items-center justify-center text-xl font-bold text-[var(--danger)]">You must be logged in to access the schedule.</div>;
-    }
 
     const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
     const semester_id = settings?.semesterStart && settings?.semesterEnd ? `${settings.semesterStart}_${settings.semesterEnd}` : '';
@@ -157,7 +152,7 @@ export default function Schedule() {
     // Get today's weekday string
     useEffect(() => {
         setJsDay(new Date().getDay());
-    }, []);
+    }, [user_id]);
     const weekdayMap: { [k: number]: Class["day"] } = {
         1: "monday",
         2: "tuesday",
@@ -175,12 +170,12 @@ export default function Schedule() {
     // Helper: check if a class is within semester dates
     function isWithinSemester(cls: Class) {
         if (!settings?.semesterStart || !settings?.semesterEnd) return true;
-        // Assume class day is a weekday string, get next date for that day
-        const weekdayMap: { [k in Class['day']]: number } = {
+        // Use a different name for the reverse mapping
+        const weekdayToNumMap: { [k in Class['day']]: number } = {
             monday: 1, tuesday: 2, wednesday: 3, thursday: 4, friday: 5
         };
         const today = new Date();
-        const classDay = weekdayMap[cls.day];
+        const classDay = weekdayToNumMap[cls.day];
         if (!classDay) return true;
         // Find the next date for this class's day
         const classDate = new Date(today);
@@ -449,6 +444,48 @@ export default function Schedule() {
         lab: 'bg-green-500',
     };
 
+    // Helper: get classes in a given week
+    function getClassesInWeek(weekOffset: number) {
+        const { startOfWeek, endOfWeek } = getWeekDates(weekOffset);
+        // For each class, check if its day falls within the week and is within semester
+        return classes.filter(cls => {
+            // Map class day to a date in the week
+            const dayIndexMap = { monday: 0, tuesday: 1, wednesday: 2, thursday: 3, friday: 4, saturday: 5, sunday: 6 };
+            const classDayIdx = dayIndexMap[cls.day];
+            if (classDayIdx === undefined) return false;
+            const classDate = new Date(startOfWeek);
+            classDate.setDate(startOfWeek.getDate() + classDayIdx);
+            return isWithinSemesterForDate(cls, classDate) && classDate >= startOfWeek && classDate <= endOfWeek;
+        });
+    }
+
+    // Calculate daysToShow at the top level so it can be used in both Today and Weekly tabs
+    const today = new Date();
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const daysToShow = [] as { date: Date, dayName: string, scheduleDay: Class['day'], classes: Class[] }[];
+    const currentDay = today.getDay();
+    const isMonday = currentDay === 1;
+    for (let i = 0; i < 7; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() + i);
+        if (isMonday && i === 7) continue;
+        const dayOfWeek = date.getDay();
+        const dayName = dayNames[dayOfWeek];
+        const scheduleDay = weekdayMap[dayOfWeek];
+        if (scheduleDay) {
+            const dayClasses = classes
+                .filter(cls => cls.day === scheduleDay && isWithinSemesterForDate(cls, date))
+                .sort((a, b) => {
+                    const [ah, am] = to24Hour(a.startTime).split(":").map(Number);
+                    const [bh, bm] = to24Hour(b.startTime).split(":").map(Number);
+                    return ah * 60 + am - (bh * 60 + bm);
+                });
+            if (dayClasses.length > 0) {
+                daysToShow.push({ date, dayName, scheduleDay, classes: dayClasses });
+            }
+        }
+    }
+
     if (loading) {
         return <div className="flex items-center justify-center min-h-[60vh]"><LoadingSpinner /></div>;
     }
@@ -465,8 +502,8 @@ export default function Schedule() {
                     <button
                         onClick={() => setTab('today')}
                         className={`px-3 sm:px-4 py-2 rounded-xl font-semibold text-sm sm:text-base transition-all duration-200 cursor-pointer ${tab === 'today'
-                                ? 'bg-[var(--primary)] text-[var(--btn-text)] shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--primary)]'
-                                : 'bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--border)]'
+                            ? 'bg-[var(--primary)] text-[var(--btn-text)] shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--primary)]'
+                            : 'bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--border)]'
                             }`}
                     >
                         Today
@@ -474,8 +511,8 @@ export default function Schedule() {
                     <button
                         onClick={() => setTab('week')}
                         className={`px-3 sm:px-4 py-2 rounded-xl font-semibold text-sm sm:text-base transition-all duration-200 cursor-pointer ${tab === 'week'
-                                ? 'bg-[var(--primary)] text-[var(--btn-text)] shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--primary)]'
-                                : 'bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--border)]'
+                            ? 'bg-[var(--primary)] text-[var(--btn-text)] shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--primary)]'
+                            : 'bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--border)]'
                             }`}
                     >
                         Weekly
@@ -507,50 +544,124 @@ export default function Schedule() {
                         </div>
                         <div className="space-y-4 sm:space-y-6">
                             {(() => {
-                                const today = new Date();
-                                const weekDays = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-                                const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-                                const weekdayMap: { [k: number]: Class["day"] } = {
-                                    1: "monday",
-                                    2: "tuesday",
-                                    3: "wednesday",
-                                    4: "thursday",
-                                    5: "friday"
-                                };
-                                // Generate next 7 days (excluding next Monday if today is Monday)
-                                const daysToShow = [];
-                                const currentDay = today.getDay();
-                                const isMonday = currentDay === 1;
-                                for (let i = 0; i < 7; i++) {
-                                    const date = new Date(today);
-                                    date.setDate(today.getDate() + i);
-                                    // Skip next Monday if today is Monday
-                                    if (isMonday && i === 7) continue;
-                                    const dayOfWeek = date.getDay();
-                                    const dayName = dayNames[dayOfWeek];
-                                    const scheduleDay = weekdayMap[dayOfWeek];
-                                    if (scheduleDay) {
-                                        const dayClasses = classes
-                                            .filter(cls => cls.day === scheduleDay)
-                                            .sort((a, b) => {
-                                                const [ah, am] = to24Hour(a.startTime).split(":").map(Number);
-                                                const [bh, bm] = to24Hour(b.startTime).split(":").map(Number);
-                                                return ah * 60 + am - (bh * 60 + bm);
-                                            });
-                                        if (dayClasses.length > 0) {
-                                            daysToShow.push({
-                                                date,
-                                                dayName,
-                                                scheduleDay,
-                                                classes: dayClasses
-                                            });
+                                if (daysToShow.length === 0) {
+                                    // Find the first week with classes in the semester
+                                    let firstWeekWithClasses: { date: Date, dayName: string, scheduleDay: Class['day'], classes: Class[] }[] = [];
+                                    if (settings?.semesterStart && settings?.semesterEnd) {
+                                        const semesterStart = new Date(settings.semesterStart);
+                                        const semesterEnd = new Date(settings.semesterEnd);
+                                        let searchDate = new Date(semesterStart);
+                                        for (let week = 0; week < 20; week++) { // search up to 20 weeks ahead
+                                            let found = false;
+                                            for (let i = 0; i < 7; i++) {
+                                                const date = new Date(searchDate);
+                                                date.setDate(searchDate.getDate() + i);
+                                                const dayOfWeek = date.getDay();
+                                                const dayName = dayNames[dayOfWeek];
+                                                const scheduleDay = weekdayMap[dayOfWeek];
+                                                if (scheduleDay) {
+                                                    const dayClasses = classes
+                                                        .filter(cls => cls.day === scheduleDay && isWithinSemesterForDate(cls, date))
+                                                        .sort((a, b) => {
+                                                            const [ah, am] = to24Hour(a.startTime).split(":").map(Number);
+                                                            const [bh, bm] = to24Hour(b.startTime).split(":").map(Number);
+                                                            return ah * 60 + am - (bh * 60 + bm);
+                                                        });
+                                                    if (dayClasses.length > 0) {
+                                                        firstWeekWithClasses.push({ date, dayName, scheduleDay, classes: dayClasses });
+                                                        found = true;
+                                                    }
+                                                }
+                                            }
+                                            if (found) break;
+                                            searchDate.setDate(searchDate.getDate() + 7);
+                                            if (searchDate > semesterEnd) break;
                                         }
                                     }
-                                }
-                                if (daysToShow.length === 0) {
+                                    if (firstWeekWithClasses.length > 0) {
+                                        // Render the first week with classes in the same format as normal weeks
+                                        return firstWeekWithClasses.map((dayData, dayIndex) => (
+                                            <div key={dayIndex} className="bg-[var(--bg-light)] rounded-2xl border border-[var(--border)] shadow-lg overflow-hidden">
+                                                <div className="bg-[var(--primary)]/10 border-b border-[var(--border)] px-4 sm:px-6 py-3 sm:py-4">
+                                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0">
+                                                        <span className="font-bold text-base sm:text-lg text-[var(--text)]">
+                                                            {dayData.dayName}
+                                                        </span>
+                                                        <span className="text-xs sm:text-sm text-[var(--text-muted)]">
+                                                            {dayData.date.toLocaleDateString('en-US', {
+                                                                month: 'short',
+                                                                day: 'numeric',
+                                                                year: 'numeric'
+                                                            })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                                <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
+                                                    {dayData.classes.map((cls: Class, classIndex: number) => (
+                                                        <div
+                                                            key={cls._id}
+                                                            className={
+                                                                `rounded-xl p-3 sm:p-4 border border-[var(--border)] shadow-md flex flex-col bg-[var(--bg)] cursor-pointer hover:scale-[1.02] hover:shadow-lg hover:border-[var(--primary)] transition-all duration-300 group animate-fadein` +
+                                                                (isPast(cls) ? " opacity-50" : "")
+                                                            }
+                                                            style={{ animationDelay: `${(dayIndex * 0.1) + (classIndex * 0.05)}s` }}
+                                                        >
+                                                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-2 sm:mb-3 gap-1 sm:gap-0">
+                                                                <span className="font-bold text-base sm:text-lg text-[var(--text)] group-hover:text-[var(--primary)] transition-colors duration-300">
+                                                                    {cls.courseName}
+                                                                </span>
+                                                                <span className="text-xs sm:text-sm text-[var(--text-muted)] group-hover:text-[var(--text)] transition-colors duration-300 font-medium">
+                                                                    {cls.room}
+                                                                </span>
+                                                            </div>
+                                                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0 mb-2 sm:mb-3">
+                                                                <span className="text-xs sm:text-sm text-[var(--text-muted)]">{cls.instructor}</span>
+                                                                <span className="text-xs sm:text-sm text-[var(--text-muted)]">{cls.type}</span>
+                                                            </div>
+                                                            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1 sm:gap-0">
+                                                                <span className="text-xs sm:text-sm text-[var(--text-muted)]">{formatTime(cls.startTime)} - {formatTime(cls.endTime)}</span>
+                                                                <div className="flex gap-2 mt-2 sm:mt-0">
+                                                                    <button
+                                                                        className="px-3 py-1 rounded-lg bg-[var(--primary)] text-[var(--btn-text)] text-xs sm:text-sm font-semibold hover:bg-[var(--primary)]/90 transition-all duration-200 hover:scale-105 cursor-pointer"
+                                                                        onClick={() => {
+                                                                            setForm({ ...cls, _id: cls._id, originalId: cls._id });
+                                                                            setShowModal(true);
+                                                                        }}
+                                                                    >
+                                                                        Edit
+                                                                    </button>
+                                                                    <button
+                                                                        className="px-3 py-1 rounded-lg bg-[var(--danger)] text-white text-xs sm:text-sm font-semibold hover:bg-[var(--danger)]/80 transition-all duration-200 hover:scale-105 cursor-pointer"
+                                                                        onClick={() => {
+                                                                            if (typeof cls._id === 'string') {
+                                                                                showConfirm(
+                                                                                    `Are you sure you want to delete "${cls.courseName}"?`,
+                                                                                    () => removeClass(cls._id!),
+                                                                                    {
+                                                                                        title: "Delete Class",
+                                                                                        confirmText: "Delete",
+                                                                                        cancelText: "Cancel",
+                                                                                        type: "danger"
+                                                                                    }
+                                                                                );
+                                                                            }
+                                                                        }}
+                                                                    >
+                                                                        Delete
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        ));
+                                    }
+                                    // If no upcoming classes at all
                                     return (
-                                        <div className="text-center text-[var(--text-muted)] py-8 sm:py-12 text-base sm:text-lg bg-[var(--bg-light)] rounded-2xl border border-[var(--border)]">
-                                            No classes scheduled for this week.
+                                        <div className="bg-[var(--bg-light)] rounded-2xl border border-[var(--border)] shadow-lg p-8 text-center mt-8">
+                                            <div className="text-lg font-semibold text-[var(--text)] mb-2">No classes this week</div>
+                                            <div className="text-base text-[var(--text-muted)]">No upcoming classes found in this semester.</div>
                                         </div>
                                     );
                                 }
@@ -571,7 +682,7 @@ export default function Schedule() {
                                             </div>
                                         </div>
                                         <div className="p-3 sm:p-6 space-y-3 sm:space-y-4">
-                                            {dayData.classes.map((cls, classIndex) => (
+                                            {dayData.classes.map((cls: Class, classIndex: number) => (
                                                 <div
                                                     key={cls._id}
                                                     className={
@@ -659,6 +770,57 @@ export default function Schedule() {
                                         Today
                                     </button>
                                 )}
+                                {tab === 'week' && daysToShow.length === 0 && getClassesInWeek(currentWeekOffset).length === 0 && (
+                                    <div>
+                                        <button
+                                            className="p-2 rounded-lg bg-[var(--primary)] text-[var(--btn-text)] hover:bg-[var(--primary)]/90 transition-all duration-200 cursor-pointer font-medium"
+                                            onClick={() => {
+                                                if (settings?.semesterStart && settings?.semesterEnd) {
+                                                    const semesterStart = new Date(settings.semesterStart);
+                                                    const semesterEnd = new Date(settings.semesterEnd);
+                                                    let searchDate = new Date(semesterStart);
+                                                    for (let week = 0; week < 20; week++) {
+                                                        let found = false;
+                                                        for (let i = 0; i < 7; i++) {
+                                                            const date = new Date(searchDate);
+                                                            date.setDate(searchDate.getDate() + i);
+                                                            const weekdayMap: { [k: number]: Class["day"] } = {
+                                                                1: "monday",
+                                                                2: "tuesday",
+                                                                3: "wednesday",
+                                                                4: "thursday",
+                                                                5: "friday"
+                                                            };
+                                                            const scheduleDay = weekdayMap[date.getDay()];
+                                                            if (scheduleDay) {
+                                                                const dayClasses = classes.filter(cls => cls.day === scheduleDay && isWithinSemesterForDate(cls, date));
+                                                                if (dayClasses.length > 0) {
+                                                                    // Calculate week offset based on start of week for both dates
+                                                                    const today = new Date();
+                                                                    today.setHours(0, 0, 0, 0);
+                                                                    const startOfThisWeek = new Date(today);
+                                                                    startOfThisWeek.setDate(today.getDate() - today.getDay() + 1); // Monday
+                                                                    const startOfTargetWeek = new Date(date);
+                                                                    startOfTargetWeek.setDate(date.getDate() - date.getDay() + 1); // Monday
+                                                                    const weekOffset = Math.floor((startOfTargetWeek.getTime() - startOfThisWeek.getTime()) / (7 * 24 * 60 * 60 * 1000));
+                                                                    setCurrentWeekOffset(weekOffset);
+                                                                    found = true;
+                                                                    break;
+                                                                }
+                                                            }
+                                                        }
+                                                        if (found) break;
+                                                        searchDate.setDate(searchDate.getDate() + 7);
+                                                        if (searchDate > semesterEnd) break;
+                                                    }
+                                                }
+                                            }}
+                                        >
+                                            Jump to Classes
+                                        </button>
+                                    </div>
+                                )}
+
                             </div>
                             <div className="text-center">
                                 <h3 className="text-lg font-semibold text-[var(--text)]">
@@ -673,12 +835,6 @@ export default function Schedule() {
                                     })()}
                                 </p>
                             </div>
-                            {/* <button 
-                            onClick={() => setShowModal(true)} 
-                            className="px-4 py-2 rounded-xl bg-[var(--primary)] text-[var(--btn-text)] font-semibold hover:bg-[var(--primary)]/90 transition-all duration-200 cursor-pointer"
-                        >
-                            + Add Class
-                        </button> */}
                         </div>
 
                         {/* Modern Calendar Grid */}
@@ -714,7 +870,7 @@ export default function Schedule() {
                                 <div className="grid grid-cols-8">
                                     {/* Time Column */}
                                     <div className="border-r border-[var(--border)]">
-                                        {Array.from({ length: 13 }, (_, i) => i + 8).map(hour => (
+                                        {Array.from({ length: 11 }, (_, i) => i + 8).map(hour => (
                                             <div key={hour} className="h-20 border-b border-[var(--border)] flex items-center justify-center">
                                                 <span className="text-xs text-[var(--text-muted)] font-medium">
                                                     {hour === 12 ? '12 PM' : hour < 12 ? `${hour} AM` : `${hour - 12} PM`}
@@ -731,7 +887,7 @@ export default function Schedule() {
                                         return (
                                             <div key={day} className="relative border-r border-[var(--border)] last:border-r-0">
                                                 {/* Hour Grid */}
-                                                {Array.from({ length: 13 }, (_, i) => i + 8).map(hour => (
+                                                {Array.from({ length: 11 }, (_, i) => i + 8).map(hour => (
                                                     <div key={hour} className="h-20 border-b border-[var(--border)] relative hover:bg-[var(--bg)]/50 transition-colors duration-200 cursor-pointer group">
                                                         {/* Add class button on hover */}
                                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200">
@@ -754,7 +910,7 @@ export default function Schedule() {
                                                     const startMinutes = sh * 60 + sm;
                                                     const endMinutes = eh * 60 + em;
                                                     const gridStart = 8 * 60; // 8 AM
-                                                    const gridEnd = 21 * 60; // 9 PM
+                                                    const gridEnd = 20 * 60; // 8 PM
 
                                                     // Only show classes within our grid
                                                     if (endMinutes <= gridStart || startMinutes >= gridEnd) return null;
@@ -832,7 +988,7 @@ export default function Schedule() {
                         </div>
 
                         {/* Quick Stats */}
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                             <div className="bg-[var(--bg-light)] rounded-xl p-4 border border-[var(--border)]">
                                 <div className="text-sm text-[var(--text-muted)]">Total Classes</div>
                                 <div className="text-2xl font-bold text-[var(--text)]">{classes.length}</div>
@@ -840,7 +996,13 @@ export default function Schedule() {
                             <div className="bg-[var(--bg-light)] rounded-xl p-4 border border-[var(--border)]">
                                 <div className="text-sm text-[var(--text-muted)]">This Week</div>
                                 <div className="text-2xl font-bold text-[var(--primary)]">
-                                    {classes.filter(cls => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(cls.day)).length}
+                                    {getClassesInWeek(0).length}
+                                </div>
+                            </div>
+                            <div className="bg-[var(--bg-light)] rounded-xl p-4 border border-[var(--border)]">
+                                <div className="text-sm text-[var(--text-muted)]">Classes in Selected Week</div>
+                                <div className="text-2xl font-bold text-[var(--primary)]">
+                                    {getClassesInWeek(currentWeekOffset).length}
                                 </div>
                             </div>
                             <div className="bg-[var(--bg-light)] rounded-xl p-4 border border-[var(--border)]">
@@ -864,6 +1026,7 @@ export default function Schedule() {
                                 </div>
                             </div>
                         </div>
+
                     </div>
                 )}
                 {showModal && (
@@ -914,15 +1077,8 @@ export default function Schedule() {
                                     <input
                                         type="time"
                                         name="startTime"
-                                        value={form.startTime ? to24Hour(form.startTime) : ""}
-                                        onChange={e => {
-                                            const value = e.target.value;
-                                            const formatted = value ? to12Hour(value) : "";
-                                            handleChange({
-                                                ...e,
-                                                target: { ...e.target, value: formatted, name: "startTime" }
-                                            } as React.ChangeEvent<HTMLInputElement>);
-                                        }}
+                                        value={form.startTime || ""}
+                                        onChange={handleChange}
                                         className="p-4 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)] text-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent hover:border-[var(--primary)] transition-all duration-200 cursor-pointer"
                                         required
                                     />

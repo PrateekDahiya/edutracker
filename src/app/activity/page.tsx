@@ -24,14 +24,15 @@ export default function Activity() {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
   useEffect(() => {
-    if (!session?.user?.email) return;
+    if (!user_id) return;
     setLoading(true);
-    fetch(`/api/activity?user_id=${encodeURIComponent(session.user.email)}&type=${filter}`)
+    fetch(`/api/activity?user_id=${encodeURIComponent(user_id)}&type=${filter}`)
       .then(res => res.json())
       .then(setActivities)
       .finally(() => setLoading(false));
-  }, [filter, session]);
+  }, [filter, user_id]);
 
   const filtered = activities;
 

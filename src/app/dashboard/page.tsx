@@ -20,10 +20,10 @@ interface CachedData {
   timestamp: number;
 }
 
-function getCachedData(userEmail: string): CachedData | null {
+function getCachedData(userId: string): CachedData | null {
   try {
-    const cached = localStorage.getItem(`${CACHE_KEYS.DASHBOARD_DATA}_${userEmail}`);
-    const lastUpdate = localStorage.getItem(`${CACHE_KEYS.LAST_UPDATE}_${userEmail}`);
+    const cached = localStorage.getItem(`${CACHE_KEYS.DASHBOARD_DATA}_${userId}`);
+    const lastUpdate = localStorage.getItem(`${CACHE_KEYS.LAST_UPDATE}_${userId}`);
     
     if (!cached || !lastUpdate) return null;
     
@@ -43,41 +43,26 @@ function getCachedData(userEmail: string): CachedData | null {
   }
 }
 
-function setCachedData(userEmail: string, data: CachedData): void {
+function setCachedData(userId: string, data: CachedData): void {
   try {
-    localStorage.setItem(`${CACHE_KEYS.DASHBOARD_DATA}_${userEmail}`, JSON.stringify(data));
-    localStorage.setItem(`${CACHE_KEYS.LAST_UPDATE}_${userEmail}`, Date.now().toString());
+    localStorage.setItem(`${CACHE_KEYS.DASHBOARD_DATA}_${userId}`, JSON.stringify(data));
+    localStorage.setItem(`${CACHE_KEYS.LAST_UPDATE}_${userId}`, Date.now().toString());
   } catch (error) {
     console.error('Error writing cache:', error);
   }
 }
 
-function clearCache(userEmail: string): void {
+function clearCache(userId: string): void {
   try {
-    localStorage.removeItem(`${CACHE_KEYS.DASHBOARD_DATA}_${userEmail}`);
-    localStorage.removeItem(`${CACHE_KEYS.LAST_UPDATE}_${userEmail}`);
+    localStorage.removeItem(`${CACHE_KEYS.DASHBOARD_DATA}_${userId}`);
+    localStorage.removeItem(`${CACHE_KEYS.LAST_UPDATE}_${userId}`);
   } catch (error) {
     console.error('Error clearing cache:', error);
   }
 }
 
-async function fetchDailyCounter(user_id: string): Promise<number> {
-  const res = await fetch(`/api/setting/dailyCounter?user_id=${encodeURIComponent(user_id)}`);
-  if (!res.ok) return 0;
-  const data = await res.json();
-  return data.dailyCounter ?? 0;
-}
-
-async function saveDailyCounter(user_id: string, value: number): Promise<void> {
-  await fetch(`/api/setting/dailyCounter`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ user_id, value }),
-  });
-}
-
 export default function Dashboard() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const { settings } = useSettings();
   const [stats, setStats] = useState({
     courses: 0,
@@ -233,13 +218,14 @@ export default function Dashboard() {
   }, []);
 
   // Function to fetch data from API
-  const fetchDataFromAPI = useCallback(async (userEmail: string) => {
+  const fetchDataFromAPI = useCallback(async (userId: string) => {
     setLoading(true);
     try {
+      const semester_id = settings?.semesterStart && settings?.semesterEnd ? `${settings.semesterStart}_${settings.semesterEnd}` : '';
       const [courses, classes, tasks] = await Promise.all([
-        getCourses(userEmail),
-        getClasses(userEmail),
-        getTasks(userEmail),
+        getCourses(userId, semester_id),
+        getClasses(userId, semester_id),
+        getTasks(userId, semester_id),
       ]);
 
       const cachedData: CachedData = {
@@ -250,7 +236,7 @@ export default function Dashboard() {
       };
 
       // Store in cache
-      setCachedData(userEmail, cachedData);
+      setCachedData(userId, cachedData);
       
       // Process the data
       processData(courses, classes, tasks);
@@ -260,12 +246,12 @@ export default function Dashboard() {
     } finally {
       setLoading(false);
     }
-  }, [processData]);
+  }, [processData, settings]);
 
   // Function to load data (from cache or API)
-  const loadData = useCallback(async (userEmail: string) => {
+  const loadData = useCallback(async (userId: string) => {
     // Try to get cached data first
-    const cachedData = getCachedData(userEmail);
+    const cachedData = getCachedData(userId);
     
     if (cachedData) {
       // Use cached data
@@ -276,70 +262,79 @@ export default function Dashboard() {
       const now = Date.now();
       if (now - cachedData.timestamp > 3 * 60 * 1000) {
         // Fetch fresh data in background
-        fetchDataFromAPI(userEmail);
+        fetchDataFromAPI(userId);
       }
     } else {
       // No cache or expired, fetch from API
-      await fetchDataFromAPI(userEmail);
+      await fetchDataFromAPI(userId);
     }
   }, [processData, fetchDataFromAPI]);
 
   // Main effect to load data
+  const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
   useEffect(() => {
-    const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (!userEmail) return;
-    
-    loadData(userEmail);
+    if (!user_id) return;
+    loadData(user_id);
     setTimeout(() => setShowCharts(true), 400);
-  }, [session, loadData]);
+  }, [user_id, loadData]);
 
   // Function to force refresh (for manual refresh)
   const forceRefresh = useCallback(() => {
-    const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (!userEmail) return;
-    
-    clearCache(userEmail);
-    fetchDataFromAPI(userEmail);
-  }, [session, fetchDataFromAPI]);
+    if (!user_id) return;
+    clearCache(user_id);
+    fetchDataFromAPI(user_id);
+  }, [user_id, fetchDataFromAPI]);
 
   // Set up periodic refresh (every 10 minutes)
   useEffect(() => {
-    const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (!userEmail) return;
-
+    if (!user_id) return;
     const interval = setInterval(() => {
-      fetchDataFromAPI(userEmail);
+      fetchDataFromAPI(user_id);
     }, 10 * 60 * 1000); // 10 minutes
 
     return () => clearInterval(interval);
-  }, [session, fetchDataFromAPI]);
+  }, [user_id, fetchDataFromAPI]);
 
-  // Load counter from backend on mount
+  // Load counter from localStorage on mount
   useEffect(() => {
-    const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (!userEmail) return;
-    fetchDailyCounter(userEmail.split('@')[0]).then(setCounter);
-  }, [session]);
+    const savedCounter = localStorage.getItem('dailyCounter');
+    const savedStartDate = localStorage.getItem('counterStartDate');
+    const savedIsRunning = localStorage.getItem('counterIsRunning');
+    
+    if (savedCounter) {
+      setCounter(parseInt(savedCounter));
+    }
+    if (savedStartDate) {
+      setStartDate(new Date(savedStartDate));
+    }
+    if (savedIsRunning === 'true') {
+      setIsRunning(true);
+    }
+  }, []);
 
   // Update counter daily when running
   useEffect(() => {
     if (!isRunning || !startDate) return;
-    const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (!userEmail) return;
-    const user_id = userEmail.split('@')[0];
+
     const checkAndUpdateCounter = () => {
       const now = new Date();
       const start = new Date(startDate);
       const daysDiff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+      
       if (daysDiff > counter) {
         setCounter(daysDiff);
-        saveDailyCounter(user_id, daysDiff);
+        localStorage.setItem('dailyCounter', daysDiff.toString());
       }
     };
+
+    // Check immediately
     checkAndUpdateCounter();
+    
+    // Check every hour
     const interval = setInterval(checkAndUpdateCounter, 60 * 60 * 1000);
+    
     return () => clearInterval(interval);
-  }, [isRunning, startDate, counter, session]);
+  }, [isRunning, startDate, counter]);
 
   // Counter control functions
   const startCounter = () => {
@@ -347,24 +342,24 @@ export default function Dashboard() {
     setStartDate(now);
     setIsRunning(true);
     setCounter(0);
-    const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (userEmail) saveDailyCounter(userEmail.split('@')[0], 0);
-  };
-  const stopCounter = () => {
-    setIsRunning(false);
-  };
-  const resetCounter = () => {
-    setIsRunning(false);
-    setStartDate(null);
-    setCounter(0);
-    const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (userEmail) saveDailyCounter(userEmail.split('@')[0], 0);
+    localStorage.setItem('dailyCounter', '0');
+    localStorage.setItem('counterStartDate', now.toISOString());
+    localStorage.setItem('counterIsRunning', 'true');
   };
 
-  if (status === 'loading') return null;
-  if (!session) {
-    return <div className="min-h-screen flex items-center justify-center text-xl font-bold text-[var(--danger)]">You must be logged in to access the dashboard.</div>;
-  }
+  const stopCounter = () => {
+    setIsRunning(false);
+    localStorage.setItem('counterIsRunning', 'false');
+  };
+
+  const resetCounter = () => {
+    setCounter(0);
+    setIsRunning(false);
+    setStartDate(null);
+    localStorage.removeItem('dailyCounter');
+    localStorage.removeItem('counterStartDate');
+    localStorage.removeItem('counterIsRunning');
+  };
 
   return (
     <div className="max-w-4xl mx-auto p-2 sm:p-4">

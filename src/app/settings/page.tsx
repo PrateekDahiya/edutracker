@@ -4,10 +4,8 @@ import { useState, useEffect } from "react";
 import { useSettings } from "../components/SettingsProvider";
 import type { Settings } from "../components/SettingsProvider";
 import { useAlert } from "../components/AlertPopup";
-import { useSession } from "next-auth/react";
 
 export default function Settings() {
-  const { data: session, status } = useSession();
   const { settings, setSettings, loading, refreshSettings } = useSettings();
   const { showAlert, AlertComponent } = useAlert();
   const [showReset, setShowReset] = useState(false);
@@ -33,11 +31,6 @@ export default function Settings() {
       setMounted(true);
   }
   }, [settings]);
-
-  if (status === 'loading') return null;
-  if (!session) {
-    return <div className="min-h-screen flex items-center justify-center text-xl font-bold text-[var(--danger)]">You must be logged in to access settings.</div>;
-  }
 
   async function saveSettingsToDB(newSettings: Settings) {
     const res = await fetch("/api/setting", {

@@ -3,8 +3,6 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import logo from '../../../public/logo.png';
-import { useSession, signIn } from 'next-auth/react';
-import { useAlert } from './AlertPopup';
 
 // Types for chat messages and steps
 type ChatRole = 'user' | 'assistant' | 'system';
@@ -26,9 +24,6 @@ const AIAgent: React.FC = () => {
   const [typedMessage, setTypedMessage] = useState<string | null>(null);
   const router = useRouter();
   const chatRef = useRef<HTMLDivElement>(null);
-  const { data: session, status } = useSession();
-  const isAuthenticated = status === 'authenticated';
-  const { showAlert, AlertComponent } = useAlert();
 
   // Auto-scroll to bottom on new message or typing
   useEffect(() => {
@@ -76,11 +71,7 @@ If a user asks for help, always guide them to the right place and explain how to
         ] }),
       });
       const data = await res.json();
-      let aiReply = data.content || "Sorry, I didn't understand that.";
-      // If not authenticated and AI suggests an action, append login reminder
-      if (!isAuthenticated && /\b(add|edit|update|mark|complete|delete|create|schedule|attendance|task|class|profile|todo)\b/i.test(aiReply)) {
-        aiReply += '\n\n*You need to log in to perform actions like adding, editing, or updating your data.*';
-      }
+      const aiReply = data.content || "Sorry, I didn't understand that.";
       // Remove 'thinking...' message before typewriter
       setMessages(prev => prev.filter(m => m.content !== 'EduTrack AI is thinking...'));
       setTyping(true);
@@ -145,40 +136,19 @@ If a user asks for help, always guide them to the right place and explain how to
           <div className="flex gap-3 justify-center mb-2">
             <button
               className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white font-semibold shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] border border-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer"
-              onClick={() => {
-                if (!isAuthenticated) {
-                  showAlert('You need to log in to add a task.', 'warning');
-                  return;
-                }
-                setOpen(false);
-                router.push('/todo?add=1');
-              }}
+              onClick={() => { setOpen(false); router.push('/todo?add=1'); }}
             >
               Add Task
             </button>
             <button
               className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white font-semibold shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] border border-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer"
-              onClick={() => {
-                if (!isAuthenticated) {
-                  showAlert('You need to log in to add a class.', 'warning');
-                  return;
-                }
-                setOpen(false);
-                router.push('/schedule?add=1');
-              }}
+              onClick={() => { setOpen(false); router.push('/schedule?add=1'); }}
             >
               Add Class
             </button>
             <button
               className="px-4 py-2 rounded-lg bg-[var(--primary)] text-white font-semibold shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] border border-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer"
-              onClick={() => {
-                if (!isAuthenticated) {
-                  showAlert('You need to log in to update attendance.', 'warning');
-                  return;
-                }
-                setOpen(false);
-                router.push('/attendance?update=1');
-              }}
+              onClick={() => { setOpen(false); router.push('/attendance?update=1'); }}
             >
               Update Attendance
             </button>
@@ -229,7 +199,6 @@ If a user asks for help, always guide them to the right place and explain how to
               Send
             </button>
           </form>
-          <AlertComponent />
         </div>
       )}
     </>

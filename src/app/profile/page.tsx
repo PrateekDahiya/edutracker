@@ -9,7 +9,7 @@ import Image from "next/image";
 import { useSettings } from "../components/SettingsProvider";
 
 export default function Profile() {
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [college, setCollege] = useState("");
@@ -145,10 +145,23 @@ export default function Profile() {
     // Optionally, clear from DB as well
   }
 
-  if (status === 'loading') return null;
-  if (!session) {
-    return <div className="min-h-screen flex items-center justify-center text-xl font-bold text-[var(--danger)]">You must be logged in to access your profile.</div>;
-  }
+  if (session === null) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <LoadingSpinner />
+    </div>
+  );
+
+  if (!session) return (
+    <div className="max-w-4xl mx-auto p-2 sm:p-4 text-center">
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-4 sm:mb-6 text-[var(--text)]">Profile</h1>
+      <button
+        onClick={() => signIn()}
+        className="px-4 sm:px-6 py-3 rounded-lg bg-[var(--primary)] text-[var(--btn-text)] font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer ring-2 ring-transparent focus:ring-[var(--primary)]"
+      >
+        Sign In
+      </button>
+    </div>
+  );
 
   return (
     <div className="max-w-4xl mx-auto p-2 sm:p-4">

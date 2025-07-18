@@ -21,17 +21,4 @@ export async function saveSetting(setting: SettingType) {
     { $set: setting },
     { upsert: true, new: true }
   );
-}
-
-export async function getDailyCounter(user_id: string): Promise<number> {
-  const setting = await Setting.findOne({ user_id });
-  return setting?.dailyCounter ?? 0;
-}
-
-export async function setDailyCounter(user_id: string, value: number): Promise<void> {
-  await Setting.findOneAndUpdate(
-    { user_id },
-    { $set: { dailyCounter: value } },
-    { upsert: true }
-  );
 } 
