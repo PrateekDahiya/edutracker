@@ -20,6 +20,19 @@ const filters = [
 
 export default function Activity() {
   const { data: session } = useSession();
+  const [filter, setFilter] = useState("all");
+  const [activities, setActivities] = useState<Activity[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!session?.user?.email) return;
+    setLoading(true);
+    fetch(`/api/activity?user_id=${encodeURIComponent(session.user.email.split('@')[0])}&type=${filter}`)
+      .then(res => res.json())
+      .then(setActivities)
+      .finally(() => setLoading(false));
+  }, [filter, session]);
+
   if (!session || !session.user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -27,20 +40,8 @@ export default function Activity() {
       </div>
     );
   }
-  const [filter, setFilter] = useState("all");
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [loading, setLoading] = useState(true);
 
   const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
-  useEffect(() => {
-    if (!user_id) return;
-    setLoading(true);
-    fetch(`/api/activity?user_id=${encodeURIComponent(user_id)}&type=${filter}`)
-      .then(res => res.json())
-      .then(setActivities)
-      .finally(() => setLoading(false));
-  }, [filter, user_id]);
-
   const filtered = activities;
 
   return (
