@@ -75,6 +75,7 @@ export const authOptions: NextAuthOptions = {
             session.user.name = user.name;
             session.user.image = user.image;
             (session.user as unknown as { college: string }).college = user.college;
+            (session.user as any).user_id = user.user_id;
           }
         }
       } catch (error) {
