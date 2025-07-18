@@ -11,6 +11,7 @@ import { useSession } from "next-auth/react";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAlert } from "../components/AlertPopup";
 import { useConfirm } from "../components/ConfirmDialog";
+import { useSettings } from "../components/SettingsProvider";
 
 // Cache utility functions
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -111,6 +112,7 @@ export default function Attendance() {
   if (!session) {
     return <div className="min-h-screen flex items-center justify-center text-xl font-bold text-[var(--danger)]">You must be logged in to access attendance.</div>;
   }
+  const { settings } = useSettings();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filter, setFilter] = useState<number>(0); // 0 = all
   const [showModal, setShowModal] = useState(false);
@@ -120,16 +122,15 @@ export default function Attendance() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const { showAlert, AlertComponent } = useAlert();
   const { showConfirm, ConfirmComponent } = useConfirm();
-  const [settings, setSettings] = useState<any>(null);
 
   const semester_id = settings?.semesterStart && settings?.semesterEnd ? `${settings.semesterStart}_${settings.semesterEnd}` : '';
-  const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
+  const user_id = (session?.user as any)?.user_id || (session?.user?.email ? session.user.email.split('@')[0] : '');
 
   // Function to fetch data from API
   const fetchDataFromAPI = useCallback(async (userEmail: string) => {
     setLoading(true);
     try {
-      const coursesData = await getCourses(userEmail, semester_id);
+      const coursesData = await getCourses(user_id, semester_id);
 
       const cachedData: CachedData = {
         courses: coursesData,
@@ -147,7 +148,7 @@ export default function Attendance() {
     } finally {
       setLoading(false);
     }
-  }, [semester_id]);
+  }, [semester_id, user_id]);
 
   // Function to load data (from cache or API)
   const loadData = useCallback(async (userEmail: string) => {

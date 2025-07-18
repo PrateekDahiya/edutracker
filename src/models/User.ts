@@ -7,8 +7,6 @@ const UserSchema = new Schema({
   image: { type: String },
   college: { type: String },
   password: { type: String }, // For credentials auth
-  counter: { type: Number, default: 0 },
-  counterStartDate: { type: Date },
 });
 
 export const User = models.User || mongoose.model("User", UserSchema); 

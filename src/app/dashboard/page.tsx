@@ -61,6 +61,21 @@ function clearCache(userEmail: string): void {
   }
 }
 
+async function fetchDailyCounter(user_id: string): Promise<number> {
+  const res = await fetch(`/api/setting/dailyCounter?user_id=${encodeURIComponent(user_id)}`);
+  if (!res.ok) return 0;
+  const data = await res.json();
+  return data.dailyCounter ?? 0;
+}
+
+async function saveDailyCounter(user_id: string, value: number): Promise<void> {
+  await fetch(`/api/setting/dailyCounter`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ user_id, value }),
+  });
+}
+
 export default function Dashboard() {
   const { data: session, status } = useSession();
   const { settings } = useSettings();
@@ -89,7 +104,6 @@ export default function Dashboard() {
   const [counter, setCounter] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
-  const [counterLoading, setCounterLoading] = useState(true);
 
   // Helper: 12-hour to 24-hour
   function to24Hour(time12h: string) {
@@ -300,19 +314,11 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [session, fetchDataFromAPI]);
 
-  // Load counter from DB on mount
+  // Load counter from backend on mount
   useEffect(() => {
     const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
     if (!userEmail) return;
-    setCounterLoading(true);
-    fetch(`/api/user?email=${encodeURIComponent(userEmail)}&counter`)
-      .then(res => res.json())
-      .then(data => {
-        setCounter(data.counter || 0);
-        setStartDate(data.counterStartDate ? new Date(data.counterStartDate) : null);
-        setIsRunning(!!data.counterStartDate);
-      })
-      .finally(() => setCounterLoading(false));
+    fetchDailyCounter(userEmail.split('@')[0]).then(setCounter);
   }, [session]);
 
   // Update counter daily when running
@@ -320,26 +326,18 @@ export default function Dashboard() {
     if (!isRunning || !startDate) return;
     const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
     if (!userEmail) return;
+    const user_id = userEmail.split('@')[0];
     const checkAndUpdateCounter = () => {
       const now = new Date();
       const start = new Date(startDate);
       const daysDiff = Math.floor((now.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
       if (daysDiff > counter) {
         setCounter(daysDiff);
-        // Save to DB
-        fetch('/api/user', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: userEmail, counter: daysDiff, counterStartDate: startDate }),
-        });
+        saveDailyCounter(user_id, daysDiff);
       }
     };
     checkAndUpdateCounter();
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
-    let interval: any = setInterval(checkAndUpdateCounter, 60 * 60 * 1000);
-    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore
+    const interval = setInterval(checkAndUpdateCounter, 60 * 60 * 1000);
     return () => clearInterval(interval);
   }, [isRunning, startDate, counter, session]);
 
@@ -350,39 +348,17 @@ export default function Dashboard() {
     setIsRunning(true);
     setCounter(0);
     const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (userEmail) {
-      fetch('/api/user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail, counter: 0, counterStartDate: now }),
-      });
-    }
+    if (userEmail) saveDailyCounter(userEmail.split('@')[0], 0);
   };
-
   const stopCounter = () => {
     setIsRunning(false);
-    const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (userEmail) {
-      fetch('/api/user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail, counter, counterStartDate: null }),
-      });
-    }
   };
-
   const resetCounter = () => {
-    setCounter(0);
     setIsRunning(false);
     setStartDate(null);
+    setCounter(0);
     const userEmail = session && session.user && typeof session.user.email === "string" ? session.user.email : undefined;
-    if (userEmail) {
-      fetch('/api/user', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: userEmail, counter: 0, counterStartDate: null }),
-      });
-    }
+    if (userEmail) saveDailyCounter(userEmail.split('@')[0], 0);
   };
 
   if (status === 'loading') return null;
@@ -446,16 +422,12 @@ export default function Dashboard() {
         
         {/* Daily Counter Card */}
         <div className="bg-[var(--bg-light)] rounded-xl p-3 sm:p-5 shadow flex flex-col items-center group transition-transform duration-300 hover:scale-105 hover:shadow-2xl cursor-pointer relative overflow-hidden">
-          {counterLoading ? (
-            <span className="text-xs text-[var(--text-muted)]">Loading...</span>
-          ) : (
           <span
             className={`text-2xl sm:text-3xl font-bold text-[var(--primary)] transition-transform duration-500 group-hover:scale-125 animate-pop`}
             style={{ animationDelay: '0.3s' }}
           >
             {counter}
           </span>
-          )}
           <span className="text-xs sm:text-sm text-[var(--text-muted)] mt-1 transition-colors duration-300 group-hover:text-[var(--primary)] text-center">
             {isRunning ? 'Days Running' : 'Daily Counter'}
           </span>

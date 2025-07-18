@@ -99,7 +99,7 @@ export default function ToDo() {
     const { showConfirm, ConfirmComponent } = useConfirm();
 
     const semester_id = settings?.semesterStart && settings?.semesterEnd ? `${settings.semesterStart}_${settings.semesterEnd}` : '';
-    const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
+    const user_id = (session?.user as any)?.user_id || (session?.user?.email ? session.user.email.split('@')[0] : '');
 
     // Function to fetch data from API
     const fetchDataFromAPI = useCallback(async (userEmail: string) => {
@@ -209,7 +209,7 @@ export default function ToDo() {
             due: form.due,
             completed: false,
         };
-        const created = await addTask(newTask, semester_id);
+        const created = await addTask(newTask, user_id, semester_id);
         setTasks(prev => [...prev, created]);
         // Clear cache to force fresh data
         clearCache(session.user.email);

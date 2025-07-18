@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectToDatabase } from "@/models/db";
-import { saveSetting, SettingType } from "@/services/settingService";
+import { saveSetting, SettingType, getDailyCounter, setDailyCounter } from "@/services/settingService";
 import Setting from "@/models/Setting";
 
 // Validation function for settings
@@ -120,4 +120,26 @@ export async function POST(req: NextRequest) {
       error: "Internal server error while saving settings" 
     }, { status: 500 });
   }
+} 
+
+// GET /api/setting/dailyCounter?user_id=...
+export async function GET_dailyCounter(req: NextRequest) {
+  await connectToDatabase();
+  const { searchParams } = new URL(req.url);
+  let user_id = searchParams.get("user_id");
+  if (!user_id) return NextResponse.json({ error: "Missing user_id" }, { status: 400 });
+  user_id = user_id.split('@')[0];
+  const value = await getDailyCounter(user_id);
+  return NextResponse.json({ dailyCounter: value });
+}
+
+// POST /api/setting/dailyCounter { user_id, value }
+export async function POST_dailyCounter(req: NextRequest) {
+  await connectToDatabase();
+  const { user_id, value } = await req.json();
+  if (!user_id || typeof value !== 'number') {
+    return NextResponse.json({ error: "Missing user_id or value" }, { status: 400 });
+  }
+  await setDailyCounter(user_id.split('@')[0], value);
+  return NextResponse.json({ success: true });
 } 

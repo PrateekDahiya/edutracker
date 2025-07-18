@@ -9,6 +9,7 @@ const SettingSchema = new Schema({
   notifSound: { type: Boolean, required: true },
   timeFormat: { type: String, enum: ["12h", "24h"], required: true },
   theme: { type: String, enum: ["light", "dark", "system"], required: true },
+  dailyCounter: { type: Number, default: 0 },
 });
 
 export default models.Setting || mongoose.model("Setting", SettingSchema); 
