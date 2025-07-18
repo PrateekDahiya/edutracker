@@ -22,7 +22,6 @@ export default function Schedule() {
         instructor: "",
         room: "",
     });
-    const [semesterEnd, setSemesterEnd] = useState<string>("");
     const infoRef = useRef<HTMLSpanElement>(null);
     const [jsDay, setJsDay] = useState<number | null>(null);
     const [loading, setLoading] = useState(true);
@@ -39,12 +38,6 @@ export default function Schedule() {
             getClasses(user_id, semester_id).then(setClasses).finally(() => setLoading(false));
         }
     }, [session, semester_id]);
-
-    // On mount, get semester end date
-    useEffect(() => {
-        const stored = localStorage.getItem("semester-end");
-        if (stored) setSemesterEnd(stored);
-    }, []);
 
     // Helper: format time for display based on settings
     function formatTime(time: string) {
@@ -268,7 +261,9 @@ export default function Schedule() {
     }
     // Helper: Add minutes to time string (24h)
     function addMinutes(time: string, mins: number) {
+        if (!time) return "";
         let [h, m] = time.split(":").map(Number);
+        if (isNaN(h) || isNaN(m) || isNaN(mins)) return "";
         let total = h * 60 + m + mins;
         let nh = Math.floor(total / 60) % 24;
         let nm = total % 60;
@@ -289,7 +284,8 @@ export default function Schedule() {
     // Get default durations from settings or fallback
     function getDefaultDuration(type: ClassType) {
         if (settings) {
-            return type === "lab" ? settings.labDuration : settings.lectureDuration;
+            const val = type === "lab" ? settings.labDuration : settings.lectureDuration;
+            return typeof val === "number" && !isNaN(val) ? val : (type === "lab" ? 120 : 60);
         }
         return type === "lab" ? 120 : 60;
     }
@@ -298,17 +294,24 @@ export default function Schedule() {
         const { name, value } = e.target;
         const update: Record<string, unknown> = { [name]: value };
         if (name === "type") {
-            // Auto-calculate end time
             const duration = getDefaultDuration(value as ClassType);
-            if (form.startTime) {
-                const end = addMinutes(to24Hour(form.startTime), duration);
-                update.endTime = to12Hour(end);
+            if (form.startTime && typeof duration === "number" && !isNaN(duration)) {
+                const start24 = form.startTime;
+                if (start24) {
+                    const end = addMinutes(start24, duration);
+                    update.endTime = end;
+                }
             }
         }
         if (name === "startTime" && form.type) {
             const duration = getDefaultDuration(form.type as ClassType);
-            const end = addMinutes(to24Hour(value), duration);
-            update.endTime = to12Hour(end);
+            if (typeof duration === "number" && !isNaN(duration)) {
+                const start24 = value;
+                if (start24) {
+                    const end = addMinutes(start24, duration);
+                    update.endTime = end;
+                }
+            }
         }
         setForm((prev) => ({ ...prev, ...update }));
     }
@@ -319,14 +322,21 @@ export default function Schedule() {
             showAlert("Please fill all fields.", "warning");
             return;
         }
-        if (!semesterEnd) {
-            const end = prompt("Enter semester end date (YYYY-MM-DD):");
-            if (!end) return;
-            setSemesterEnd(end);
-            localStorage.setItem("semester-end", end);
+        if (!settings?.semesterStart || !settings?.semesterEnd) {
+            showAlert("Please set your semester start and end dates in your profile before adding a class.", "warning");
+            return;
         }
         const duration = getDefaultDuration(form.type as ClassType);
-        const endTime = form.startTime ? to12Hour(addMinutes(to24Hour(form.startTime), duration)) : "";
+        if (typeof duration !== "number" || isNaN(duration)) {
+            showAlert("Invalid class duration.", "warning");
+            return;
+        }
+        const start24 = form.startTime!;
+        const endTime = start24 ? addMinutes(start24, duration) : "";
+        if (!endTime) {
+            showAlert("Invalid start time.", "warning");
+            return;
+        }
         let overlap = false;
         if (form._id) {
             // Editing: do not check for overlap at all
@@ -908,8 +918,8 @@ export default function Schedule() {
 
                                                 {/* Classes for this day */}
                                                 {classes.filter(cls => cls.day === day && isWithinSemesterForDate(cls, dayDate)).map(cls => {
-                                                    const [sh, sm] = to24Hour(cls.startTime).split(":").map(Number);
-                                                    const [eh, em] = to24Hour(cls.endTime).split(":").map(Number);
+                                                    const [sh, sm] = cls.startTime.split(":").map(Number);
+                                                    const [eh, em] = cls.endTime.split(":").map(Number);
 
                                                     // Calculate position and height
                                                     const startMinutes = sh * 60 + sm;
@@ -1019,7 +1029,7 @@ export default function Schedule() {
                                         const todayClasses = classes.filter(cls => cls.day === today);
                                         if (todayClasses.length > 0) {
                                             const nextClass = todayClasses.find(cls => {
-                                                const [h, m] = to24Hour(cls.startTime).split(":").map(Number);
+                                                const [h, m] = cls.startTime.split(":").map(Number);
                                                 const classTime = new Date();
                                                 classTime.setHours(h, m, 0, 0);
                                                 return classTime > now;
