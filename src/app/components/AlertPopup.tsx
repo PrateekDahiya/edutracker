@@ -86,7 +86,7 @@ export default function AlertPopup({
   if (!mounted) return null;
 
   return (
-    <div className={`fixed top-20 sm:top-4 right-2 sm:right-4 z-50 transition-all duration-300 ${
+    <div className={`fixed top-20 sm:top-[7.5rem] right-2 sm:right-4 z-60 transition-all duration-300 ${
       isVisible 
         ? 'opacity-100 translate-x-0 scale-100' 
         : 'opacity-0 translate-x-full scale-95'
