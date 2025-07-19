@@ -9,6 +9,7 @@ import {
 } from "../../services/attendanceService";
 import { useSession } from "next-auth/react";
 import { useSettings } from "../components/SettingsProvider";
+import { useRouter } from "next/navigation";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { useAlert } from "../components/AlertPopup";
 import { useConfirm } from "../components/ConfirmDialog";
@@ -117,7 +118,8 @@ export default function Attendance() {
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
   const { showAlert, AlertComponent } = useAlert();
   const { showConfirm, ConfirmComponent } = useConfirm();
-  const { settings } = useSettings();
+  const { settings, refreshSettings } = useSettings();
+  const router = useRouter();
   const semester_id = settings?.semesterStart && settings?.semesterEnd ? `${settings.semesterStart}_${settings.semesterEnd}` : '';
   const user_id = session?.user?.email ? session.user.email.split('@')[0] : '';
 
@@ -167,18 +169,18 @@ export default function Attendance() {
     }
   }, [fetchDataFromAPI]);
 
-  // Main effect to load data
-  useEffect(() => {
-    if (!user_id) return;
-    loadData(user_id);
-  }, [user_id, loadData]);
-
   // Function to force refresh (for manual refresh)
   const forceRefresh = useCallback(() => {
     if (!user_id) return;
     clearCache(user_id);
     fetchDataFromAPI(user_id);
   }, [user_id, fetchDataFromAPI]);
+
+  // Main effect to load data
+  useEffect(() => {
+    if (!user_id) return;
+    loadData(user_id);
+  }, [user_id, loadData]);
 
   // Set up periodic refresh (every 10 minutes)
   useEffect(() => {
@@ -302,20 +304,19 @@ export default function Attendance() {
       </div>
     );
   }
+  // Floating warning if semester dates are missing
+  const showSemesterWarning = !settings?.semesterStart || !settings?.semesterEnd;
+  // Floating warning bar
+  const FloatingWarning = () => (
+    <div className="fixed left-4 bottom-4 z-50 flex items-center gap-3 bg-[var(--warning)] text-white px-4 py-3 rounded-xl shadow-xl font-semibold animate-fadein">
+      <span>Set semester start and end dates in your profile to use this page.</span>
+      <a href="/profile" className="ml-2 px-3 py-1 rounded bg-white/20 hover:bg-white/30 text-white font-bold transition">Go to Profile</a>
+    </div>
+  );
 
-  if (!semester_id) {
-    return (
-      <div className="max-w-2xl mx-auto p-4 text-center text-[var(--text-muted)]">
-        <h2 className="text-xl font-bold mb-4">Attendance Tracker</h2>
-        <p className="mb-4">To add or view courses, please set your semester start and end dates in your <a href="/profile" className="text-[var(--primary)] underline">profile</a>.</p>
-        <button
-          className="px-4 py-2 rounded-xl bg-[var(--btn-bg)] text-[var(--btn-text)] font-semibold shadow-lg opacity-50 cursor-not-allowed"
-          disabled
-        >
-          Add Course
-        </button>
-      </div>
-    );
+  // Show floating warning if needed
+  if (showSemesterWarning) {
+    return <FloatingWarning />;
   }
 
   return (

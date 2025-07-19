@@ -14,6 +14,10 @@ export default function BottomNav() {
         <FaHome className="text-xl mb-0.5" />
         Home
       </Link>
+      <Link href="/attendance" className={`flex flex-col items-center text-xs ${pathname.startsWith('/attendance') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}>
+        <FaCalendarCheck className="text-xl mb-0.5" />
+        Attendance
+      </Link>
       <Link href="/schedule" className={`flex flex-col items-center text-xs ${pathname.startsWith('/schedule') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}>
         <FaCalendarCheck className="text-xl mb-0.5" />
         Schedule

@@ -7,10 +7,12 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { useAlert } from "../components/AlertPopup";
 import { useConfirm } from "../components/ConfirmDialog";
 import { useSettings } from "../components/SettingsProvider";
+import { useRouter } from "next/navigation";
 
 export default function Schedule() {
     const { data: session } = useSession();
-    const { settings } = useSettings();
+    const { settings, refreshSettings } = useSettings();
+    const router = useRouter();
     // Persistent state for classes
     const [classes, setClasses] = useState<Class[]>([]);
     const [showModal, setShowModal] = useState(false);
@@ -38,6 +40,9 @@ export default function Schedule() {
             getClasses(user_id, semester_id).then(setClasses).finally(() => setLoading(false));
         }
     }, [session, semester_id]);
+
+    // Floating warning if semester dates are missing
+    const showSemesterWarning = !settings?.semesterStart || !settings?.semesterEnd;
 
     // Helper: format time for display based on settings
     function formatTime(time: string) {
@@ -505,6 +510,18 @@ export default function Schedule() {
           <div className="text-xl text-[var(--danger)] font-bold">Please log in to access your schedule.</div>
         </div>
       );
+    }
+
+    // Floating warning bar
+    const FloatingWarning = () => (
+      <div className="fixed left-4 bottom-4 z-50 flex items-center gap-3 bg-[var(--warning)] text-white px-4 py-3 rounded-xl shadow-xl font-semibold animate-fadein">
+        <span>Set semester start and end dates in your profile to use this page.</span>
+        <a href="/profile" className="ml-2 px-3 py-1 rounded bg-white/20 hover:bg-white/30 text-white font-bold transition">Go to Profile</a>
+      </div>
+    );
+    // Show floating warning if needed
+    if (showSemesterWarning) {
+      return <FloatingWarning />;
     }
 
     if (loading) {

@@ -7,6 +7,7 @@ import LoadingSpinner from "../components/LoadingSpinner";
 import { useAlert } from "../components/AlertPopup";
 import { useConfirm } from "../components/ConfirmDialog";
 import { useSettings } from "../components/SettingsProvider";
+import { useRouter } from "next/navigation";
 
 // Cache utility functions
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -78,7 +79,8 @@ const priorityStyles = {
 
 export default function ToDo() {
     const { data: session } = useSession();
-    const { settings } = useSettings();
+    const { settings, refreshSettings } = useSettings();
+    const router = useRouter();
     const [tasks, setTasks] = useState<Task[]>([]);
     const [form, setForm] = useState({
         title: '',
@@ -175,6 +177,17 @@ export default function ToDo() {
         return () => clearInterval(interval);
   }, [user_id, fetchDataFromAPI]);
 
+    // Floating warning if semester dates are missing
+    const showSemesterWarning = !settings?.semesterStart || !settings?.semesterEnd;
+
+    // Floating warning bar
+    const FloatingWarning = () => (
+      <div className="fixed left-4 bottom-4 z-50 flex items-center gap-3 bg-[var(--warning)] text-white px-4 py-3 rounded-xl shadow-xl font-semibold animate-fadein">
+        <span>Set semester start and end dates in your profile to use this page.</span>
+        <a href="/profile" className="ml-2 px-3 py-1 rounded bg-white/20 hover:bg-white/30 text-white font-bold transition">Go to Profile</a>
+      </div>
+    );
+
     function openModal() {
         setForm({ title: '', description: '', course: '', course_id: '', priority: 'medium', due: '' });
         setShowModal(true);
@@ -188,9 +201,24 @@ export default function ToDo() {
         const { name, value } = e.target;
         setForm(f => ({ ...f, [name]: value }));
     }
+    // Helper to slugify course name
+    function slugify(str: string) {
+      return str.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    }
+
+    // When typing a custom course, generate a unique course_id
+    function handleCourseInput(e: React.ChangeEvent<HTMLInputElement>) {
+      const value = e.target.value;
+      let course_id = "";
+      if (value) {
+        course_id = `custom-${slugify(value)}-${Math.random().toString(36).slice(2, 8)}`;
+      }
+      setForm(f => ({ ...f, course: value, course_id }));
+    }
+
     async function handleAdd(e: React.FormEvent) {
         e.preventDefault();
-        if (!form.title || !form.course || !form.course_id || !form.due || !session?.user?.email || !semester_id) return;
+        if (!form.title || !form.due || !form.course || !form.course_id || !session?.user?.email || !semester_id) return;
         const newTask: Omit<Task, '_id'> = {
             user_id: user_id,
             course_id: form.course_id,
@@ -204,7 +232,7 @@ export default function ToDo() {
         const created = await addTask(newTask, semester_id);
         setTasks(prev => [...prev, created]);
         // Clear cache to force fresh data
-      clearCache(user_id);
+        clearCache(user_id);
         closeModal();
     }
     async function toggleComplete(id: string) {
@@ -315,6 +343,11 @@ export default function ToDo() {
     );
   }
 
+    // Show floating warning if needed
+    if (showSemesterWarning) {
+      return <FloatingWarning />;
+    }
+
     return (
         <div className="max-w-4xl mx-auto p-2 sm:p-4">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
@@ -378,21 +411,32 @@ export default function ToDo() {
                             
                             <div className="flex flex-col gap-2">
                                 <label className="text-[var(--text)] font-semibold text-sm sm:text-base">Related Course</label>
-                                <select
-                                    name="course_id"
-                                    value={form.course_id}
-                                    onChange={e => {
+                                <div className="flex flex-col gap-2">
+                                  {courses.length > 0 && (
+                                    <select
+                                      name="course_id"
+                                      value={form.course_id}
+                                      onChange={e => {
                                         const selected = courses.find(c => c.course_id === e.target.value);
                                         setForm(f => ({ ...f, course_id: e.target.value, course: selected ? selected.course_name : '' }));
-                                    }}
-                                    className="p-3 sm:p-4 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)] text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent hover:border-[var(--primary)] transition-all duration-200 cursor-pointer"
-                                    required
-                                >
-                                    <option value="">Select Related Course</option>
-                                    {courses.map(c => (
+                                      }}
+                                      className="p-3 sm:p-4 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)] text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent hover:border-[var(--primary)] transition-all duration-200 cursor-pointer"
+                                    >
+                                      <option value="">Select Related Course</option>
+                                      {courses.map(c => (
                                         <option key={c.course_id} value={c.course_id}>{c.course_name}</option>
-                                    ))}
-                                </select>
+                                      ))}
+                                    </select>
+                                  )}
+                                  <input
+                                    name="course"
+                                    value={form.course}
+                                    onChange={handleCourseInput}
+                                    placeholder={courses.length > 0 ? "Or type custom course name" : "Enter course name"}
+                                    className="p-3 sm:p-4 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)] text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent hover:border-[var(--primary)] transition-all duration-200 cursor-pointer mt-2"
+                                    required
+                                  />
+                                </div>
                             </div>
                             
                             <div className="flex flex-col gap-2">

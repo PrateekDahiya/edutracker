@@ -5,6 +5,7 @@ import { getCourses, Course } from "../../services/attendanceService";
 import { getClasses, Class } from "../../services/scheduleService";
 import { getTasks, Task } from "../../services/todoService";
 import { useSettings } from "../components/SettingsProvider";
+import { useRouter } from "next/navigation";
 
 // Cache utility functions
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -63,7 +64,8 @@ function clearCache(userId: string): void {
 
 export default function Dashboard() {
   const { data: session } = useSession();
-  const { settings } = useSettings();
+  const { settings, refreshSettings } = useSettings();
+  const router = useRouter();
   const [stats, setStats] = useState({
     courses: 0,
     classesToday: 0,
@@ -361,12 +363,27 @@ export default function Dashboard() {
     localStorage.removeItem('counterIsRunning');
   };
 
+  // Floating warning if semester dates are missing
+  const showSemesterWarning = !settings?.semesterStart || !settings?.semesterEnd;
+  // Floating warning bar
+  const FloatingWarning = () => (
+    <div className="fixed left-4 bottom-4 z-50 flex items-center gap-3 bg-[var(--warning)] text-white px-4 py-3 rounded-xl shadow-xl font-semibold animate-fadein">
+      <span>Set semester start and end dates in your profile to use this page.</span>
+      <a href="/profile" className="ml-2 px-3 py-1 rounded bg-white/20 hover:bg-white/30 text-white font-bold transition">Go to Profile</a>
+    </div>
+  );
+
   if (!session || !session.user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-xl text-[var(--danger)] font-bold">Please log in to access the dashboard.</div>
       </div>
     );
+  }
+
+  // Show floating warning if needed
+  if (showSemesterWarning) {
+    return <FloatingWarning />;
   }
 
   return (
