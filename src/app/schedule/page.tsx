@@ -432,9 +432,12 @@ export default function Schedule() {
     // Helper: open add modal prefilled
     function openAddModal(day: Class['day'], hour: number) {
         setForm({
-            ...form,
+            courseName: "",
             day,
-            startTime: to12Hour(`${hour.toString().padStart(2, '0')}:00`),
+            startTime: `${hour.toString().padStart(2, '0')}:00`, // 24-hour format for <input type='time'>
+            type: "lecture",
+            instructor: "",
+            room: "",
         });
         setShowModal(true);
     }
@@ -790,15 +793,15 @@ export default function Schedule() {
                                         <button
                                             className="p-2 rounded-lg bg-[var(--primary)] text-[var(--btn-text)] hover:bg-[var(--primary)]/90 transition-all duration-200 cursor-pointer font-medium"
                                             onClick={() => {
-                                                if (settings?.semesterStart && settings?.semesterEnd) {
-                                                    const semesterStart = new Date(settings.semesterStart);
-                                                    const semesterEnd = new Date(settings.semesterEnd);
+                                            if (settings?.semesterStart && settings?.semesterEnd) {
+                                                const semesterStart = new Date(settings.semesterStart);
+                                                const semesterEnd = new Date(settings.semesterEnd);
                                                     let searchDate = new Date(semesterStart);
                                                     for (let week = 0; week < 20; week++) {
                                                         let found = false;
-                                                        for (let i = 0; i < 7; i++) {
-                                                            const date = new Date(searchDate);
-                                                            date.setDate(searchDate.getDate() + i);
+                                                    for (let i = 0; i < 7; i++) {
+                                                        const date = new Date(searchDate);
+                                                        date.setDate(searchDate.getDate() + i);
                                                             const weekdayMap: { [k: number]: Class["day"] } = {
                                                                 1: "monday",
                                                                 2: "tuesday",
@@ -806,10 +809,10 @@ export default function Schedule() {
                                                                 4: "thursday",
                                                                 5: "friday"
                                                             };
-                                                            const scheduleDay = weekdayMap[date.getDay()];
-                                                            if (scheduleDay) {
-                                                                const dayClasses = classes.filter(cls => cls.day === scheduleDay && isWithinSemesterForDate(cls, date));
-                                                                if (dayClasses.length > 0) {
+                                                        const scheduleDay = weekdayMap[date.getDay()];
+                                                        if (scheduleDay) {
+                                                            const dayClasses = classes.filter(cls => cls.day === scheduleDay && isWithinSemesterForDate(cls, date));
+                                                            if (dayClasses.length > 0) {
                                                                     // Calculate week offset based on start of week for both dates
                                                                     const today = new Date();
                                                                     today.setHours(0, 0, 0, 0);
@@ -821,14 +824,14 @@ export default function Schedule() {
                                                                     setCurrentWeekOffset(weekOffset);
                                                                     found = true;
                                                                     break;
-                                                                }
                                                             }
                                                         }
-                                                        if (found) break;
-                                                        searchDate.setDate(searchDate.getDate() + 7);
-                                                        if (searchDate > semesterEnd) break;
                                                     }
+                                                        if (found) break;
+                                                    searchDate.setDate(searchDate.getDate() + 7);
+                                                    if (searchDate > semesterEnd) break;
                                                 }
+                                            }
                                             }}
                                         >
                                             Jump to Classes
@@ -917,7 +920,7 @@ export default function Schedule() {
                                                 ))}
 
                                                 {/* Classes for this day */}
-                                                {classes.filter(cls => cls.day === day && isWithinSemesterForDate(cls, dayDate)).map(cls => {
+                                                {classes.filter(cls => cls.day === day && isWithinSemesterForDate(cls, dayDate)).map((cls, idx) => {
                                                     const [sh, sm] = cls.startTime.split(":").map(Number);
                                                     const [eh, em] = cls.endTime.split(":").map(Number);
 
@@ -936,7 +939,7 @@ export default function Schedule() {
                                                     return (
                                                         <div
                                                             key={cls._id}
-                                                            className="absolute left-1 right-1 bg-gradient-to-r from-[var(--primary)] to-[var(--primary)]/90 text-white rounded-lg shadow-lg cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border border-[var(--primary)] group z-10"
+                                                            className="absolute left-1 right-1 bg-gradient-to-r from-[var(--primary)] to-[var(--primary)]/90 text-white rounded-lg shadow-lg cursor-pointer hover:shadow-xl hover:scale-[1.02] transition-all duration-300 border border-[var(--border)] group z-10"
                                                             style={{
                                                                 top: `${top}px`,
                                                                 height: `${height}px`,
@@ -945,12 +948,15 @@ export default function Schedule() {
                                                             onClick={e => openPopup(cls, e)}
                                                         >
                                                             {/* Main card content */}
-                                                            <div className="p-2 h-full flex flex-col justify-center">
+                                                            <div className="p-2 h-full flex flex-col justify-center items-center">
                                                                 <div className="font-semibold text-sm leading-tight">
                                                                     {cls.courseName}
                                                                 </div>
                                                                 <div className="text-xs opacity-90 mt-1">
                                                                     {formatTime(cls.startTime)}
+                                                                </div>
+                                                                <div className="text-xs opacity-80 mt-1">
+                                                                    {cls.room}
                                                                 </div>
                                                             </div>
 

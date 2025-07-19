@@ -3,6 +3,7 @@ import "./globals.css";
 import AppProviders from "./components/AppProviders";
 import { ThemeProvider } from "next-themes";
 import AIAgent from "./components/AIAgent";
+import Head from 'next/head';
 
 export const metadata: Metadata = {
   title: "EduTracker",
@@ -19,6 +20,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <Head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#2563eb" />
+        <link rel="apple-touch-icon" href="/logo.png" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+      </Head>
       <body className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)]">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <AppProviders>
