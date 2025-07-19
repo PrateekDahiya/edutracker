@@ -179,7 +179,7 @@ export default function Profile() {
           <div className="flex flex-col items-center gap-4 sm:gap-6">
             <div className="relative group">
               <Image
-                src={session?.user?.image || "/profile-placeholder.png"}
+                src={photo || session?.user?.image || "/profile-placeholder.png"}
                 alt="avatar"
                 width={40}
                 height={40}
