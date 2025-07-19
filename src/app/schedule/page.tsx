@@ -570,12 +570,7 @@ export default function Schedule() {
                     <>
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
                             <span className="text-base sm:text-lg font-semibold text-[var(--text)]">This Week&apos;s Classes</span>
-                            <button
-                                onClick={() => setCompact(v => !v)}
-                                className="px-3 sm:px-4 py-2 rounded-xl border border-[var(--border)] text-xs sm:text-sm text-[var(--text)] bg-[var(--bg-light)] cursor-pointer hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 transition-all duration-200 shadow hover:shadow-lg"
-                            >
-                                {compact ? "Expanded" : "Compact"} View
-                            </button>
+                            
                         </div>
                         <div className="space-y-4 sm:space-y-6">
                             {(() => {
