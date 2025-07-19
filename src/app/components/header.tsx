@@ -59,10 +59,10 @@ export default function Header() {
                 {/* Extra nav - hidden on mobile */}
                 {isAuthenticated && (
                   <>
-                    {/* Show as icon on mobile, styled like theme toggle */}
+                    {/* Show as icon only on mobile, text link on large screens */}
                     <Link
                       href="/activity"
-                      className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] flex items-center justify-center"
+                      className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] flex items-center justify-center md:hidden"
                       aria-label="Activity"
                     >
                       <FaBell className="text-lg" />
