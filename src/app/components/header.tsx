@@ -28,11 +28,10 @@ export default function Header() {
 
     const getNavLinkClass = (path: string) => {
         const isActive = pathname === path;
-        return `px-2 sm:px-4 py-2 rounded-xl font-semibold transition-all duration-200 cursor-pointer shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] border text-sm sm:text-base ${
-            isActive 
-                ? 'bg-[var(--primary)] text-[var(--btn-text)] border-[var(--primary)] shadow-xl hover:shadow-2xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95' 
+        return `px-2 sm:px-4 py-2 rounded-xl font-semibold transition-all duration-200 cursor-pointer shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] border text-sm sm:text-base ${isActive
+                ? 'bg-[var(--primary)] text-[var(--btn-text)] border-[var(--primary)] shadow-xl hover:shadow-2xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95'
                 : 'bg-[var(--bg-light)] text-[var(--text)] border-[var(--border)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95'
-        }`;
+            }`;
     };
 
     return (
@@ -58,17 +57,17 @@ export default function Header() {
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
                 {/* Extra nav - hidden on mobile */}
                 {isAuthenticated && (
-                  <>
-                    {/* Show as icon only on mobile, text link on large screens */}
-                    <Link
-                      href="/activity"
-                      className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] flex items-center justify-center md:hidden"
-                      aria-label="Activity"
-                    >
-                      <FaBell className="text-lg" />
-                    </Link>
-                    <Link href="/activity" className={`${getNavLinkClass("/activity")} hidden lg:block`}>Activity</Link>
-                  </>
+                    <>
+                        {/* Show as icon only on mobile, text link on large screens */}
+                        <Link
+                            href="/activity"
+                            className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] flex items-center justify-center md:hidden"
+                            aria-label="Activity"
+                        >
+                            <FaBell className="text-lg" />
+                        </Link>
+                        <Link href="/activity" className={`${getNavLinkClass("/activity")} hidden lg:block`}>Activity</Link>
+                    </>
                 )}
                 {/* Theme Toggle */}
                 <ThemeToggle />
@@ -109,8 +108,8 @@ export default function Header() {
                                 }}
                                 className="h-8 sm:h-10 px-2 sm:px-4 py-1 sm:py-2 rounded-xl bg-[var(--danger)] text-white text-xs sm:text-sm font-semibold cursor-pointer shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 ring-2 ring-transparent focus:ring-[var(--danger)]"
                             >
-                                <span className="hidden sm:inline">Sign Out</span>
-                                <span className="sm:hidden">Out</span>
+                                <span>Sign Out</span>
+
                             </button>
                         </>
                     ) : (
@@ -118,8 +117,7 @@ export default function Header() {
                             onClick={() => signIn()}
                             className="h-8 sm:h-10 px-2 sm:px-4 py-1 sm:py-2 rounded-xl bg-[var(--primary)] text-[var(--btn-text)] text-xs sm:text-sm font-semibold cursor-pointer shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 ring-2 ring-transparent focus:ring-[var(--primary)]"
                         >
-                            <span className="hidden sm:inline">Sign In</span>
-                            <span className="sm:hidden">In</span>
+                            <span>Sign In</span>
                         </button>
                     )}
                 </div>
@@ -129,7 +127,7 @@ export default function Header() {
             {isMobileMenuOpen && isAuthenticated && (
                 <div className="fixed inset-0 z-40 md:hidden">
                     {/* Backdrop */}
-                    <div 
+                    <div
                         className="absolute inset-0 bg-[var(--bg-dark)]/50 backdrop-blur-sm"
                         onClick={() => setIsMobileMenuOpen(false)}
                     />
