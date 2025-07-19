@@ -7,6 +7,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { FaBell } from "react-icons/fa";
 
 export default function Header() {
     const { data: session, status } = useSession();
@@ -39,7 +40,7 @@ export default function Header() {
             {/* Left: Logo */}
             <div className="text-xl sm:text-2xl md:text-3xl font-bold">
                 <Link href="/" className="text-[var(--primary)] hover:text-[var(--primary)]/80 transition-colors duration-200 hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 cursor-pointer">
-                    EduTrack
+                    EduTracker
                 </Link>
             </div>
 
@@ -57,7 +58,17 @@ export default function Header() {
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
                 {/* Extra nav - hidden on mobile */}
                 {isAuthenticated && (
+                  <>
+                    {/* Show as icon on mobile, styled like theme toggle */}
+                    <Link
+                      href="/activity"
+                      className="h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] flex items-center justify-center"
+                      aria-label="Activity"
+                    >
+                      <FaBell className="text-lg" />
+                    </Link>
                     <Link href="/activity" className={`${getNavLinkClass("/activity")} hidden lg:block`}>Activity</Link>
+                  </>
                 )}
                 {/* Theme Toggle */}
                 <ThemeToggle />
@@ -135,7 +146,7 @@ export default function Header() {
                 </div>
             )}
             <style>{`
-              @media (max-width: 500px) {
+              @media (max-width: 640px) {
                 .hide-on-mobile { display: none !important; }
               }
             `}</style>

@@ -86,13 +86,14 @@ export default function AlertPopup({
   if (!mounted) return null;
 
   return (
-    <div className={`fixed top-4 right-4 z-50 transition-all duration-300 ${
+    <div className={`fixed top-20 sm:top-4 right-2 sm:right-4 z-50 transition-all duration-300 ${
       isVisible 
         ? 'opacity-100 translate-x-0 scale-100' 
         : 'opacity-0 translate-x-full scale-95'
     }`}>
       <div className={`
-        flex items-center gap-3 px-6 py-4 rounded-2xl shadow-2xl border-2 
+        flex items-center gap-3 px-4 sm:px-6 py-3 sm:py-4 rounded-2xl shadow-2xl border-2
+        w-[95vw] max-w-xs sm:max-w-md text-sm sm:text-lg
         ${colors.bg} ${colors.border} ${colors.text}
         hover:shadow-3xl transition-all duration-200 cursor-pointer
         group hover:scale-105 hover:-translate-y-1
@@ -100,7 +101,7 @@ export default function AlertPopup({
         <span className="text-2xl group-hover:scale-125 transition-transform duration-200">
           {getIcon()}
         </span>
-        <span className="font-semibold text-lg">{message}</span>
+        <span className="font-semibold text-sm sm:text-lg break-words">{message}</span>
         <button
           onClick={onClose}
           className="ml-2 p-1 rounded-full hover:bg-white/20 transition-colors duration-200"

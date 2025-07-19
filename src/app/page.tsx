@@ -5,6 +5,7 @@ import { useSession } from "next-auth/react";
 import { FaCalendarCheck, FaTasks, FaRobot, FaChartBar, FaMobileAlt, FaChalkboardTeacher, FaUserShield, FaPalette, FaBolt, FaUserCircle, FaSignInAlt, FaListAlt, FaHistory, FaHome, FaCog, FaUser } from "react-icons/fa";
 import { FaLinkedin, FaInstagram, FaGithub, FaGlobe, FaEnvelope } from "react-icons/fa";
 import Image from "next/image";
+import { useAlert } from "./components/AlertPopup";
 
 const features = [
   { icon: "📊", title: "Attendance Tracking" },
@@ -16,6 +17,7 @@ const features = [
 export default function Home() {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showInstall, setShowInstall] = useState(false);
+  const { showAlert, AlertComponent } = useAlert();
 
   useEffect(() => {
     const handler = (e: any) => {
@@ -28,13 +30,7 @@ export default function Home() {
   }, []);
 
   const handleInstallClick = () => {
-    if (deferredPrompt) {
-      (deferredPrompt as any).prompt();
-      (deferredPrompt as any).userChoice.finally(() => {
-        setDeferredPrompt(null);
-        setShowInstall(false);
-      });
-    }
+    showAlert('To install: Tap browser menu > "Add to Home screen".', 'info');
   };
 
   return (
@@ -45,14 +41,13 @@ export default function Home() {
         <div className="flex flex-col items-center z-10 max-w-xl w-full text-center">
           <h1 className="text-5xl sm:text-6xl font-extrabold text-[var(--primary)] mb-6 leading-tight drop-shadow-lg">EduTracker<br /><span className="text-[var(--text)] font-bold">Modern Student Productivity</span></h1>
           <p className="text-xl text-[var(--text-muted)] mb-8 max-w-lg mx-auto">Track your classes, attendance, and tasks with a beautiful, responsive interface. Stay organized, boost your grades, and never miss a class or deadline again!</p>
-          {showInstall && (
-            <button
-              onClick={handleInstallClick}
-              className="px-10 py-4 rounded-2xl bg-[var(--primary)] text-[var(--btn-text)] font-bold text-2xl shadow-xl hover:shadow-2xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 mb-6 cursor-pointer ring-2 ring-transparent focus:ring-[var(--primary)]"
-            >
-              Download App
-            </button>
-          )}
+          <button
+            onClick={handleInstallClick}
+            className="px-10 py-4 rounded-2xl bg-[var(--primary)] text-[var(--btn-text)] font-bold text-2xl shadow-xl hover:shadow-2xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 mb-6 cursor-pointer ring-2 ring-transparent focus:ring-[var(--primary)]"
+          >
+            Download App
+          </button>
+          <AlertComponent />
           <div className="flex gap-6 mt-2 justify-center">
             <a href="https://www.linkedin.com/in/dahiyaprtk27" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
               <FaLinkedin className="text-3xl sm:text-4xl text-[#0A66C2] hover:text-[var(--primary)] transition-colors duration-200 cursor-pointer" />
@@ -212,29 +207,7 @@ export default function Home() {
         </div>
       </footer>
 
-      {/* Bottom Nav Bar for mobile */}
-      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-light)] border-t border-[var(--border)] flex justify-around items-center py-2 sm:hidden" style={{ boxShadow: '0 -2px 12px 0 rgba(0,0,0,0.06)' }}>
-        <Link href="/" className="flex flex-col items-center text-[var(--primary)] hover:text-[var(--primary)]/80 text-xs">
-          <FaHome className="text-xl mb-0.5" />
-          Home
-        </Link>
-        <Link href="/schedule" className="flex flex-col items-center text-[var(--text)] hover:text-[var(--primary)] text-xs">
-          <FaCalendarCheck className="text-xl mb-0.5" />
-          Schedule
-        </Link>
-        <Link href="/todo" className="flex flex-col items-center text-[var(--text)] hover:text-[var(--primary)] text-xs">
-          <FaTasks className="text-xl mb-0.5" />
-          ToDo
-        </Link>
-        <Link href="/profile" className="flex flex-col items-center text-[var(--text)] hover:text-[var(--primary)] text-xs">
-          <FaUser className="text-xl mb-0.5" />
-          Profile
-        </Link>
-        <Link href="/settings" className="flex flex-col items-center text-[var(--text)] hover:text-[var(--primary)] text-xs">
-          <FaCog className="text-xl mb-0.5" />
-          Settings
-        </Link>
-      </nav>
+      
     </main>
   );
 }
