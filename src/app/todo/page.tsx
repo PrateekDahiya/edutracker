@@ -182,7 +182,7 @@ export default function ToDo() {
 
     // Floating warning bar
     const FloatingWarning = () => (
-      <div className="fixed left-4 bottom-4 z-50 flex items-center gap-3 bg-[var(--warning)] text-white px-4 py-3 rounded-xl shadow-xl font-semibold animate-fadein">
+      <div className="floating-warning flex items-center gap-3 bg-[var(--warning)] text-white px-4 py-3 rounded-xl shadow-xl font-semibold animate-fadein">
         <span>Set semester start and end dates in your profile to use this page.</span>
         <a href="/profile" className="ml-2 px-3 py-1 rounded bg-white/20 hover:bg-white/30 text-white font-bold transition">Go to Profile</a>
       </div>

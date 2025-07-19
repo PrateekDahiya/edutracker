@@ -148,3 +148,27 @@ export function useAlert() {
 
   return { showAlert, AlertComponent };
 } 
+
+/* Responsive floating warning styles */
+<style jsx global>{`
+  .floating-warning {
+    left: 1rem;
+    bottom: 1rem;
+    z-index: 60;
+    position: fixed;
+    max-width: 90vw;
+  }
+  @media (max-width: 640px) {
+    .floating-warning {
+      left: 0;
+      right: 0;
+      bottom: 4.5rem; /* above bottom nav/AI agent */
+      margin: 0 auto;
+      width: 95vw;
+      max-width: 95vw;
+      border-radius: 1rem;
+      text-align: center;
+      justify-content: center;
+    }
+  }
+`}</style> 
