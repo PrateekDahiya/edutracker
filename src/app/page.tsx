@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { FaCalendarCheck, FaTasks, FaRobot, FaChartBar, FaMobileAlt, FaChalkboardTeacher, FaUserShield, FaPalette, FaBolt, FaUserCircle, FaSignInAlt, FaListAlt, FaHistory } from "react-icons/fa";
+import { FaCalendarCheck, FaTasks, FaRobot, FaChartBar, FaMobileAlt, FaChalkboardTeacher, FaUserShield, FaPalette, FaBolt, FaUserCircle, FaSignInAlt, FaListAlt, FaHistory, FaHome, FaCog, FaUser } from "react-icons/fa";
 import { FaLinkedin, FaInstagram, FaGithub, FaGlobe, FaEnvelope } from "react-icons/fa";
+import Image from "next/image";
 
 const features = [
   { icon: "📊", title: "Attendance Tracking" },
@@ -22,16 +23,17 @@ export default function Home() {
       setDeferredPrompt(e);
       setShowInstall(true);
     };
-    window.addEventListener('beforeinstallprompt', handler);
-    return () => window.removeEventListener('beforeinstallprompt', handler);
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
   const handleInstallClick = () => {
     if (deferredPrompt) {
-      deferredPrompt.prompt();
-      deferredPrompt.userChoice.then(() => setDeferredPrompt(null));
-    } else {
-      alert('To install the app, use your browser menu and select "Add to Home Screen".');
+      (deferredPrompt as any).prompt();
+      (deferredPrompt as any).userChoice.finally(() => {
+        setDeferredPrompt(null);
+        setShowInstall(false);
+      });
     }
   };
 
@@ -43,12 +45,14 @@ export default function Home() {
         <div className="flex flex-col items-center z-10 max-w-xl w-full text-center">
           <h1 className="text-5xl sm:text-6xl font-extrabold text-[var(--primary)] mb-6 leading-tight drop-shadow-lg">EduTracker<br /><span className="text-[var(--text)] font-bold">Modern Student Productivity</span></h1>
           <p className="text-xl text-[var(--text-muted)] mb-8 max-w-lg mx-auto">Track your classes, attendance, and tasks with a beautiful, responsive interface. Stay organized, boost your grades, and never miss a class or deadline again!</p>
-          <button
-            onClick={handleInstallClick}
-            className="px-10 py-4 rounded-2xl bg-[var(--primary)] text-[var(--btn-text)] font-bold text-2xl shadow-xl hover:shadow-2xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 mb-6 cursor-pointer ring-2 ring-transparent focus:ring-[var(--primary)]"
-          >
-            Download App
-          </button>
+          {showInstall && (
+            <button
+              onClick={handleInstallClick}
+              className="px-10 py-4 rounded-2xl bg-[var(--primary)] text-[var(--btn-text)] font-bold text-2xl shadow-xl hover:shadow-2xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 mb-6 cursor-pointer ring-2 ring-transparent focus:ring-[var(--primary)]"
+            >
+              Download App
+            </button>
+          )}
           <div className="flex gap-6 mt-2 justify-center">
             <a href="https://www.linkedin.com/in/dahiyaprtk27" aria-label="LinkedIn" target="_blank" rel="noopener noreferrer">
               <FaLinkedin className="text-3xl sm:text-4xl text-[#0A66C2] hover:text-[var(--primary)] transition-colors duration-200 cursor-pointer" />
@@ -124,7 +128,7 @@ export default function Home() {
               <p className="text-[var(--text-muted)] text-right max-w-xs">Overview of your academic progress, quick stats, and recent activity timeline.</p>
             </div>
             <div className="flex-1 flex justify-center md:justify-start">
-              <img src="/screenshots/dashboard.png" alt="Dashboard Screenshot" className="w-full max-w-md rounded-2xl shadow-xl border border-[var(--border)] bg-[var(--bg-light)] object-cover" />
+              <Image src="/screenshots/dashboard.png" alt="Dashboard Screenshot" width={400} height={220} className="w-full max-w-md rounded-2xl shadow-xl border border-[var(--border)] bg-[var(--bg-light)] object-cover" />
             </div>
           </div>
           {/* Attendance Step */}
@@ -135,7 +139,7 @@ export default function Home() {
               <p className="text-[var(--text-muted)] text-left max-w-xs">Mark, view, and analyze your attendance for every course. Get actionable suggestions.</p>
             </div>
             <div className="flex-1 flex justify-center md:justify-end">
-              <img src="/screenshots/attendance.png" alt="Attendance Screenshot" className="w-full max-w-md rounded-2xl shadow-xl border border-[var(--border)] bg-[var(--bg-light)] object-cover" />
+              <Image src="/screenshots/attendance.png" alt="Attendance Screenshot" width={400} height={220} className="w-full max-w-md rounded-2xl shadow-xl border border-[var(--border)] bg-[var(--bg-light)] object-cover" />
             </div>
           </div>
           {/* Schedule Step */}
@@ -146,7 +150,7 @@ export default function Home() {
               <p className="text-[var(--text-muted)] text-right max-w-xs">Visualize your weekly class schedule, add or edit classes, and view class details.</p>
             </div>
             <div className="flex-1 flex justify-center md:justify-start">
-              <img src="/screenshots/schedule.png" alt="Schedule Screenshot" className="w-full max-w-md rounded-2xl shadow-xl border border-[var(--border)] bg-[var(--bg-light)] object-cover" />
+              <Image src="/screenshots/schedule.png" alt="Schedule Screenshot" width={400} height={220} className="w-full max-w-md rounded-2xl shadow-xl border border-[var(--border)] bg-[var(--bg-light)] object-cover" />
             </div>
           </div>
           {/* ToDo Step */}
@@ -157,7 +161,7 @@ export default function Home() {
               <p className="text-[var(--text-muted)] text-left max-w-xs">Manage your tasks and assignments. Add, edit, or mark tasks as complete.</p>
             </div>
             <div className="flex-1 flex justify-center md:justify-end">
-              <img src="/screenshots/todo.png" alt="ToDo Screenshot" className="w-full max-w-md rounded-2xl shadow-xl border border-[var(--border)] bg-[var(--bg-light)] object-cover" />
+              <Image src="/screenshots/todo.png" alt="ToDo Screenshot" width={400} height={220} className="w-full max-w-md rounded-2xl shadow-xl border border-[var(--border)] bg-[var(--bg-light)] object-cover" />
             </div>
           </div>
           {/* Activity Step */}
@@ -168,7 +172,7 @@ export default function Home() {
               <p className="text-[var(--text-muted)] text-right max-w-xs">See a timeline of your recent actions and updates in the app.</p>
             </div>
             <div className="flex-1 flex justify-center md:justify-start">
-              <img src="/screenshots/activity.png" alt="Activity Screenshot" className="w-full max-w-md rounded-2xl shadow-xl border border-[var(--border)] bg-[var(--bg-light)] object-cover" />
+              <Image src="/screenshots/activity.png" alt="Activity Screenshot" width={400} height={220} className="w-full max-w-md rounded-2xl shadow-xl border border-[var(--border)] bg-[var(--bg-light)] object-cover" />
             </div>
           </div>
           {/* Profile Step */}
@@ -179,23 +183,11 @@ export default function Home() {
               <p className="text-[var(--text-muted)] text-left max-w-xs">View and edit your personal information and avatar.</p>
             </div>
             <div className="flex-1 flex justify-center md:justify-end">
-              <img src="/screenshots/profile.png" alt="Profile Screenshot" className="w-full max-w-md rounded-2xl shadow-xl border border-[var(--border)] bg-[var(--bg-light)] object-cover" />
+              <Image src="/screenshots/profile.png" alt="Profile Screenshot" width={400} height={220} className="w-full max-w-md rounded-2xl shadow-xl border border-[var(--border)] bg-[var(--bg-light)] object-cover" />
             </div>
           </div>
-
-        </div>
-      </section>
-
-      {/* Call to Action Section */}
-      <section className="w-full py-16 flex flex-col items-center">
-        <h2 className="text-3xl sm:text-4xl font-bold text-[var(--primary)] mb-4 text-center">Ready to get started?</h2>
-        <p className="text-lg text-[var(--text-muted)] mb-8 text-center max-w-xl">Sign up now and take control of your academic journey with EduTracker. Stay organized, motivated, and ahead of your schedule!</p>
-        <button
-          onClick={handleInstallClick}
-          className="px-8 py-4 rounded-xl bg-[var(--primary)] text-[var(--btn-text)] font-bold text-xl shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 mb-4 cursor-pointer ring-2 ring-transparent focus:ring-[var(--primary)]"
-        >
-          Download EduTracker
-        </button>
+      
+    </div>
       </section>
 
       {/* Footer */}
@@ -219,6 +211,30 @@ export default function Home() {
           </a>
         </div>
       </footer>
+
+      {/* Bottom Nav Bar for mobile */}
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-light)] border-t border-[var(--border)] flex justify-around items-center py-2 sm:hidden" style={{ boxShadow: '0 -2px 12px 0 rgba(0,0,0,0.06)' }}>
+        <Link href="/" className="flex flex-col items-center text-[var(--primary)] hover:text-[var(--primary)]/80 text-xs">
+          <FaHome className="text-xl mb-0.5" />
+          Home
+        </Link>
+        <Link href="/schedule" className="flex flex-col items-center text-[var(--text)] hover:text-[var(--primary)] text-xs">
+          <FaCalendarCheck className="text-xl mb-0.5" />
+          Schedule
+        </Link>
+        <Link href="/todo" className="flex flex-col items-center text-[var(--text)] hover:text-[var(--primary)] text-xs">
+          <FaTasks className="text-xl mb-0.5" />
+          ToDo
+        </Link>
+        <Link href="/profile" className="flex flex-col items-center text-[var(--text)] hover:text-[var(--primary)] text-xs">
+          <FaUser className="text-xl mb-0.5" />
+          Profile
+        </Link>
+        <Link href="/settings" className="flex flex-col items-center text-[var(--text)] hover:text-[var(--primary)] text-xs">
+          <FaCog className="text-xl mb-0.5" />
+          Settings
+        </Link>
+      </nav>
     </main>
   );
 }

@@ -65,7 +65,7 @@ export default function Header() {
                 {isAuthenticated && (
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="md:hidden h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] flex items-center justify-center"
+                        className="md:hidden h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] flex items-center justify-center hide-on-mobile"
                     >
                         <span className="text-lg">{isMobileMenuOpen ? '✕' : '☰'}</span>
                     </button>
@@ -134,6 +134,11 @@ export default function Header() {
                     </div>
                 </div>
             )}
+            <style>{`
+              @media (max-width: 500px) {
+                .hide-on-mobile { display: none !important; }
+              }
+            `}</style>
         </header>
     );
 }

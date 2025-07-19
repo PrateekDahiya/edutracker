@@ -105,10 +105,15 @@ If a user asks for help, always guide them to the right place and explain how to
   // Floating button and widget
   return (
     <>
+      <style>{`
+        @media (max-width: 500px) {
+          .ai-fab-fix { bottom: 5.5rem !important; }
+        }
+      `}</style>
       {/* Floating Ask AI button */}
       {!open && (
         <button
-          className="fixed z-50 bottom-6 right-6 flex items-center gap-2 bg-[var(--primary)] text-white px-4 py-2 rounded-full shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] border border-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 group cursor-pointer"
+          className="fixed z-50 bottom-6 right-6 ai-fab-fix flex items-center gap-2 bg-[var(--primary)] text-white px-4 py-2 rounded-full shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] border border-[var(--primary)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 group cursor-pointer"
           onClick={() => setOpen(true)}
           style={{ boxShadow: '0 4px 24px 0 rgba(0,0,0,0.18)' }}
         >
@@ -121,7 +126,9 @@ If a user asks for help, always guide them to the right place and explain how to
       )}
       {/* Floating chat widget */}
       {open && (
-        <div className="fixed z-50 bottom-6 right-6 w-[90vw] max-w-sm bg-white dark:bg-[var(--bg-dark)] rounded-2xl shadow-2xl border border-[var(--border)] flex flex-col gap-4 p-4 animate-fade-in transition-all duration-200 hover:scale-[1.03] hover:shadow-2xl group">
+        <div
+          className="fixed z-50 bottom-6 right-6 ai-fab-fix w-[90vw] max-w-sm bg-white dark:bg-[var(--bg-dark)] rounded-2xl shadow-2xl border border-[var(--border)] flex flex-col gap-4 p-4 animate-fade-in transition-all duration-200 hover:scale-[1.03] hover:shadow-2xl group"
+        >
           <div className="flex items-center justify-between mb-2">
             <div className="flex items-center gap-2">
               <Image src={logo} alt="AI" className="w-8 h-8" />
