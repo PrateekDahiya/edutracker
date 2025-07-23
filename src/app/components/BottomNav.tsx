@@ -30,7 +30,7 @@ export default function BottomNav() {
         <FaUser className="text-xl mb-0.5" />
         Profile
       </Link>
-      {session.user?.isAdmin && (
+      {(session.user && (session.user as any).isAdmin) && (
         <Link href="/admin" className={`flex flex-col items-center text-xs ${pathname.startsWith('/admin') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}>
           <FaUserShield className="text-xl mb-0.5" />
           Admin
