@@ -413,20 +413,20 @@ export default function ToDo() {
                                 <label className="text-[var(--text)] font-semibold text-sm sm:text-base">Related Course</label>
                                 <div className="flex flex-col gap-2">
                                   {courses.length > 0 && (
-                                    <select
-                                      name="course_id"
-                                      value={form.course_id}
-                                      onChange={e => {
+                                <select
+                                    name="course_id"
+                                    value={form.course_id}
+                                    onChange={e => {
                                         const selected = courses.find(c => c.course_id === e.target.value);
                                         setForm(f => ({ ...f, course_id: e.target.value, course: selected ? selected.course_name : '' }));
-                                      }}
-                                      className="p-3 sm:p-4 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)] text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent hover:border-[var(--primary)] transition-all duration-200 cursor-pointer"
-                                    >
-                                      <option value="">Select Related Course</option>
-                                      {courses.map(c => (
+                                    }}
+                                    className="p-3 sm:p-4 rounded-xl border border-[var(--border)] bg-[var(--input-bg)] text-[var(--text)] text-base sm:text-lg focus:outline-none focus:ring-2 focus:ring-[var(--primary)] focus:border-transparent hover:border-[var(--primary)] transition-all duration-200 cursor-pointer"
+                                >
+                                    <option value="">Select Related Course</option>
+                                    {courses.map(c => (
                                         <option key={c.course_id} value={c.course_id}>{c.course_name}</option>
-                                      ))}
-                                    </select>
+                                    ))}
+                                </select>
                                   )}
                                   <input
                                     name="course"

@@ -50,6 +50,9 @@ export default function Header() {
                     <Link href="/attendance" className={getNavLinkClass("/attendance")}>Attendance</Link>
                     <Link href="/schedule" className={getNavLinkClass("/schedule")}>Schedule</Link>
                     <Link href="/todo" className={getNavLinkClass("/todo")}>ToDo</Link>
+                    {(session?.user && (session.user as any).isAdmin) && (
+                        <Link href="/admin" className={getNavLinkClass("/admin")}>Admin</Link>
+                    )}
                 </nav>
             )}
 
@@ -139,6 +142,9 @@ export default function Header() {
                             <Link href="/schedule" className={getNavLinkClass("/schedule") + " text-center"}>Schedule</Link>
                             <Link href="/todo" className={getNavLinkClass("/todo") + " text-center"}>ToDo</Link>
                             <Link href="/activity" className={getNavLinkClass("/activity") + " text-center"}>Activity</Link>
+                            {(session?.user && (session.user as any).isAdmin) && (
+                                <Link href="/admin" className={getNavLinkClass("/admin") + " text-center"}>Admin</Link>
+                            )}
                         </nav>
                     </div>
                 </div>

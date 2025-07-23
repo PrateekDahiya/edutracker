@@ -83,6 +83,7 @@ export const authOptions: NextAuthOptions = {
             session.user.image = user.image;
             (session.user as unknown as { college: string }).college = user.college;
             (session.user as any).user_id = user.user_id;
+            (session.user as any).isAdmin = user.isAdmin; // Add isAdmin to session
           }
         }
       } catch (error) {

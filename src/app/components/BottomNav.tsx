@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
-import { FaHome, FaCalendarCheck, FaTasks, FaUser, FaCog, FaTachometerAlt } from "react-icons/fa";
+import { FaHome, FaCalendarCheck, FaTasks, FaUser, FaCog, FaTachometerAlt, FaUserShield } from "react-icons/fa";
 
 export default function BottomNav() {
   const { data: session, status } = useSession();
@@ -30,6 +30,12 @@ export default function BottomNav() {
         <FaUser className="text-xl mb-0.5" />
         Profile
       </Link>
+      {session.user?.isAdmin && (
+        <Link href="/admin" className={`flex flex-col items-center text-xs ${pathname.startsWith('/admin') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}>
+          <FaUserShield className="text-xl mb-0.5" />
+          Admin
+        </Link>
+      )}
     </nav>
   );
 } 

@@ -7,6 +7,7 @@ const UserSchema = new Schema({
   image: { type: String },
   college: { type: String },
   password: { type: String }, // For credentials auth
+  isAdmin: { type: Boolean, default: false }, // Admin flag
 });
 
 export const User = models.User || mongoose.model("User", UserSchema); 
