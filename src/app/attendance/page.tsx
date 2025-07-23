@@ -108,7 +108,7 @@ const defaultForm = {
 };
 
 export default function Attendance() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [courses, setCourses] = useState<Course[]>([]);
   const [filter, setFilter] = useState<number>(0); // 0 = all
   const [showModal, setShowModal] = useState(false);
@@ -297,10 +297,11 @@ export default function Attendance() {
     ? courses.filter((c) => getAttendancePercent(c) < filter)
     : courses;
 
+  if (status === "loading" || session === undefined) return <div className="flex items-center justify-center min-h-[40vh]"><LoadingSpinner withLogo className="scale-125" /></div>;
   if (!session || !session.user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
-        <div className="text-xl text-[var(--danger)] font-bold">Please log in to access attendance.</div>
+        <div className="text-xl text-[var(--danger)] font-bold">Please log in to access your attendance.</div>
       </div>
     );
   }
@@ -318,6 +319,8 @@ export default function Attendance() {
   if (showSemesterWarning) {
     return <FloatingWarning />;
   }
+
+  if (loading) return <div className="flex items-center justify-center min-h-[40vh]"><LoadingSpinner withLogo className="scale-125" /></div>;
 
   return (
     <div className="max-w-5xl mx-auto p-2 sm:p-4">

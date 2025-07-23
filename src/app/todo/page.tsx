@@ -78,7 +78,7 @@ const priorityStyles = {
 };
 
 export default function ToDo() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const { settings, refreshSettings } = useSettings();
     const router = useRouter();
     const [tasks, setTasks] = useState<Task[]>([]);
@@ -91,7 +91,7 @@ export default function ToDo() {
         due: '',
     });
     const [expanded, setExpanded] = useState<{ [course: string]: boolean }>({});
-    const [showAll, setShowAll] = useState(false);
+    const [showAll, setShowAll] = useState(true);
     const [showModal, setShowModal] = useState(false);
     const [courses, setCourses] = useState<Course[]>([]);
     const [filter, setFilter] = useState<'all' | 'completed' | 'incomplete'>('all');
@@ -289,7 +289,7 @@ export default function ToDo() {
         setExpanded(prev => ({ ...prev, [course]: !prev[course] }));
     }
 
-    // Filtered tasks
+    // Filtered tasks (always applies filter)
     const filteredTasks = tasks.filter(t => {
         if (filter === 'all') return true;
         if (filter === 'completed') return t.completed;
@@ -298,12 +298,6 @@ export default function ToDo() {
     });
     // Get unique courses from filtered tasks
     const uniqueCourses = Array.from(new Set(filteredTasks.map(t => t.course))).filter(Boolean);
-    // Group filtered tasks by course
-    const grouped: { course: string; tasks: Task[] }[] = uniqueCourses.map((course: string) => ({
-        course,
-        tasks: filteredTasks.filter((t: Task) => t.course === course).sort(sortTasks),
-    }));
-
     // Sort helpers
     function sortTasks(a: Task, b: Task) {
         const pOrder = { high: 0, medium: 1, low: 2 };
@@ -314,9 +308,13 @@ export default function ToDo() {
         }
         return 0;
     }
-
+    // Group filtered tasks by course
+    const grouped: { course: string; tasks: Task[] }[] = uniqueCourses.map((course: string) => ({
+        course,
+        tasks: filteredTasks.filter((t: Task) => t.course === course).sort(sortTasks),
+    }));
     // Unified view
-    const allTasks: Task[] = [...tasks].sort(sortTasks);
+    const allTasks: Task[] = [...filteredTasks].sort(sortTasks);
 
     // Helper: format time for display based on settings
     function formatTime(dateString: string) {
@@ -335,6 +333,18 @@ export default function ToDo() {
         }
     }
 
+    // Helper: count tasks completed today
+    function getCompletedToday() {
+      const today = new Date();
+      return tasks.filter(t => {
+        if (!t.completed) return false;
+        const completedDate = new Date(t.due);
+        return completedDate.getDate() === today.getDate() && completedDate.getMonth() === today.getMonth() && completedDate.getFullYear() === today.getFullYear();
+      }).length;
+    }
+    const completedToday = getCompletedToday();
+
+  if (status === "loading" || session === undefined) return <div className="flex items-center justify-center min-h-[40vh]"><LoadingSpinner withLogo className="scale-125" /></div>;
   if (!session || !session.user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -348,8 +358,16 @@ export default function ToDo() {
       return <FloatingWarning />;
     }
 
+    if (loading) return <div className="flex items-center justify-center min-h-[40vh]"><LoadingSpinner withLogo className="scale-125" /></div>;
+
     return (
         <div className="max-w-4xl mx-auto p-2 sm:p-4">
+            {/* Motivational Message */}
+            {completedToday > 0 && (
+              <div className="mb-4 rounded-xl bg-[var(--success)]/10 border border-[var(--success)] text-[var(--success)] px-4 py-3 font-semibold shadow animate-fadein">
+                <span role="img" aria-label="trophy">🏆</span> You’re on a roll! {completedToday} task{completedToday > 1 ? 's' : ''} completed today.
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
                 <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text)]">To-Do List</h1>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
@@ -368,20 +386,6 @@ export default function ToDo() {
                 </div>
             </div>
             
-            {loading && (
-                <div className="mb-4 p-4 bg-[var(--bg-light)] rounded-xl border border-[var(--border)]">
-                    <div className="flex items-center gap-3">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[var(--primary)]"></div>
-                        <span className="text-[var(--text-muted)]">Updating todo data...</span>
-                    </div>
-                </div>
-            )}
-            
-            {loading && (
-                <div className="absolute inset-0 z-10 flex items-center justify-center bg-[var(--bg)]/60">
-                    <LoadingSpinner />
-                </div>
-            )}
             
             {showModal && (
                 <div className="fixed inset-0 z-50 flex items-start justify-center overflow-y-auto h-screen bg-[var(--bg-dark)]/90 backdrop-blur-sm">
@@ -495,8 +499,9 @@ export default function ToDo() {
                 </div>
             )}
             <div className="flex gap-2 mb-4">
+            <button onClick={() => setShowAll(true)} className={`px-4 py-2 rounded-xl font-semibold transition-all duration-200 cursor-pointer ${showAll ? 'bg-[var(--primary)] text-[var(--btn-text)] shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--primary)]' : 'bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--border)]'}`}>All Tasks</button>
                 <button onClick={() => setShowAll(false)} className={`px-4 py-2 rounded-xl font-semibold transition-all duration-200 cursor-pointer ${!showAll ? 'bg-[var(--primary)] text-[var(--btn-text)] shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--primary)]' : 'bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--border)]'}`}>By Course</button>
-                <button onClick={() => setShowAll(true)} className={`px-4 py-2 rounded-xl font-semibold transition-all duration-200 cursor-pointer ${showAll ? 'bg-[var(--primary)] text-[var(--btn-text)] shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--primary)]' : 'bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 ring-2 ring-transparent focus:ring-[var(--border)]'}`}>All Tasks</button>
+                
                 <button onClick={openModal} className="ml-auto px-4 py-2 rounded-xl bg-[var(--btn-bg)] text-[var(--btn-text)] font-semibold cursor-pointer shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 ring-2 ring-transparent focus:ring-[var(--primary)]">Add Task</button>
             
             </div>

@@ -65,14 +65,14 @@ export default function AdminPage() {
       localStorage.setItem(`${CACHE_KEYS.ADMIN_STATS}_${userId}`, JSON.stringify(stats));
       localStorage.setItem(`${CACHE_KEYS.ADMIN_ANALYTICS}_${userId}`, JSON.stringify(analytics));
       localStorage.setItem(`${CACHE_KEYS.LAST_UPDATE}_${userId}`, Date.now().toString());
-    } catch (e) {}
+    } catch (e) { }
   }
   function clearCache(userId: string) {
     try {
       localStorage.removeItem(`${CACHE_KEYS.ADMIN_STATS}_${userId}`);
       localStorage.removeItem(`${CACHE_KEYS.ADMIN_ANALYTICS}_${userId}`);
       localStorage.removeItem(`${CACHE_KEYS.LAST_UPDATE}_${userId}`);
-    } catch (e) {}
+    } catch (e) { }
   }
 
   // Fetch analytics and user stats with cache
@@ -161,8 +161,17 @@ export default function AdminPage() {
       .finally(() => setLoading(false));
   };
 
-  if (loading) return <div className="flex items-center justify-center min-h-[40vh]"><LoadingSpinner className="scale-125" /></div>;
-  if (!stats || !analytics) return <div className="p-8 text-center text-red-500">Failed to load admin data.</div>;
+  if (status === "loading" || session === undefined) return <div className="flex items-center justify-center min-h-[40vh]"><LoadingSpinner withLogo className="scale-125" /></div>;
+  if (!session || !session.user || !(session.user as any).isAdmin) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-xl text-[var(--danger)] font-bold">Please log in as an admin to access this page.</div>
+      </div>
+    );
+  }
+  if ((!stats || !analytics) && status === "authenticated" && session && session.user && (session.user as any).isAdmin) {
+    return <div className="p-8 text-center text-red-500">Failed to load admin data.</div>;
+  }
 
   // Bulk actions
   const handleBulkAction = async (action: string) => {
@@ -216,12 +225,12 @@ export default function AdminPage() {
   };
 
   return (
-    <div className="max-w-6xl mx-auto p-2 sm:p-4">
+    <div className="max-w-4xl mx-auto p-2 sm:p-4">
       {/* Global Refresh Button */}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl sm:text-3xl font-bold text-[var(--text)]">Admin Panel</h1>
         <button
-          className="px-3 py-2 rounded bg-[var(--primary)] text-white font-semibold text-sm shadow hover:bg-[var(--primary)]/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)] cursor-pointer"
+          className="px-4 py-2 rounded-xl bg-[var(--primary)] text-[var(--btn-text)] font-semibold text-sm shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 ring-2 ring-transparent focus:ring-[var(--primary)] cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           onClick={handleRefresh}
           disabled={loading}
           title="Refresh all admin data"
@@ -230,11 +239,11 @@ export default function AdminPage() {
         </button>
       </div>
       {/* Tabs */}
-      <div className="flex gap-2 mb-6 border-b border-[var(--border)]">
+      <div className="flex gap-2 mb-6 ">
         {ADMIN_TABS.map(tab => (
           <button
             key={tab.key}
-            className={`px-3 py-2 font-semibold border-b-2 transition-colors duration-200 cursor-pointer rounded-t-md focus:outline-none focus:ring-2 focus:ring-[var(--primary)] ${activeTab === tab.key ? "border-[var(--primary)] text-[var(--primary)] bg-[var(--bg-light)]" : "border-transparent text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--bg-light)]/70"}`}
+            className={`px-4 py-2 rounded-xl font-semibold border-b-1 transition-all duration-200 cursor-pointer shadow-lg hover:shadow-xl focus:outline-none focus:ring-2  ${activeTab === tab.key ? "border-[var(--primary)] text-[var(--primary)] bg-[var(--bg-light)]" : "border-transparent text-[var(--text-muted)] hover:text-[var(--primary)] hover:bg-[var(--bg-light)]/70"}`}
             onClick={() => setActiveTab(tab.key)}
           >
             {tab.label}
@@ -294,11 +303,11 @@ export default function AdminPage() {
         <div>
           {/* Bulk Actions Bar */}
           <div className="flex flex-wrap gap-2 mb-2 items-center">
-            <button className="px-2 py-1 rounded bg-[var(--primary)] text-white text-xs font-semibold cursor-pointer hover:bg-[var(--primary)]/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" disabled={saving || selectedUsers.length === 0} onClick={() => handleBulkAction("activate")}>Activate</button>
-            <button className="px-2 py-1 rounded bg-[var(--primary)] text-white text-xs font-semibold cursor-pointer hover:bg-[var(--primary)]/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" disabled={saving || selectedUsers.length === 0} onClick={() => handleBulkAction("deactivate")}>Deactivate</button>
-            <button className="px-2 py-1 rounded bg-[var(--primary)] text-white text-xs font-semibold cursor-pointer hover:bg-[var(--primary)]/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" disabled={saving || selectedUsers.length === 0} onClick={() => handleBulkAction("setAdmin")}>Set Admin</button>
-            <button className="px-2 py-1 rounded bg-[var(--primary)] text-white text-xs font-semibold cursor-pointer hover:bg-[var(--primary)]/90 focus:outline-none focus:ring-2 focus:ring-[var(--primary)]" disabled={saving || selectedUsers.length === 0} onClick={() => handleBulkAction("unsetAdmin")}>Unset Admin</button>
-            <button className="px-2 py-1 rounded bg-[var(--danger)] text-white text-xs font-semibold cursor-pointer hover:bg-[var(--danger)]/90 focus:outline-none focus:ring-2 focus:ring-[var(--danger)]" disabled={saving || selectedUsers.length === 0} onClick={() => handleBulkAction("delete")}>Delete</button>
+            <button className="px-3 py-2 rounded-xl bg-[var(--primary)] text-[var(--btn-text)] text-xs font-semibold cursor-pointer shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 ring-2 ring-transparent focus:ring-[var(--primary)]" disabled={saving || selectedUsers.length === 0} onClick={() => handleBulkAction("activate")}>Activate</button>
+            <button className="px-3 py-2 rounded-xl bg-[var(--primary)] text-[var(--btn-text)] text-xs font-semibold cursor-pointer shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 ring-2 ring-transparent focus:ring-[var(--primary)]" disabled={saving || selectedUsers.length === 0} onClick={() => handleBulkAction("deactivate")}>Deactivate</button>
+            <button className="px-3 py-2 rounded-xl bg-[var(--primary)] text-[var(--btn-text)] text-xs font-semibold cursor-pointer shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 ring-2 ring-transparent focus:ring-[var(--primary)]" disabled={saving || selectedUsers.length === 0} onClick={() => handleBulkAction("setAdmin")}>Set Admin</button>
+            <button className="px-3 py-2 rounded-xl bg-[var(--primary)] text-[var(--btn-text)] text-xs font-semibold cursor-pointer shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 ring-2 ring-transparent focus:ring-[var(--primary)]" disabled={saving || selectedUsers.length === 0} onClick={() => handleBulkAction("unsetAdmin")}>Unset Admin</button>
+            <button className="px-3 py-2 rounded-xl bg-[var(--danger)] text-white text-xs font-semibold cursor-pointer shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 ring-2 ring-transparent focus:ring-[var(--danger)]" disabled={saving || selectedUsers.length === 0} onClick={() => handleBulkAction("delete")}>Delete</button>
             <span className="ml-2 text-xs text-[var(--text-muted)]">{selectedUsers.length} selected</span>
           </div>
           <div className="overflow-x-auto">
@@ -453,7 +462,7 @@ export default function AdminPage() {
           <h2 className="text-lg sm:text-xl font-semibold mb-2 text-[var(--text)]">Export Data</h2>
           <div className="flex gap-3 flex-wrap mb-4">
             {['users', 'tasks', 'attendance', 'classes'].map(type => (
-              <button key={type} className="px-3 py-2 rounded bg-[var(--primary)] text-white font-semibold" onClick={() => handleExport(type)} disabled={exporting}>{exporting ? 'Exporting...' : `Export ${type.charAt(0).toUpperCase() + type.slice(1)}`}</button>
+              <button key={type} className="px-3 py-2 rounded-xl bg-[var(--primary)] text-[var(--btn-text)] font-semibold shadow-lg hover:shadow-xl hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 ring-2 ring-transparent focus:ring-[var(--primary)]" onClick={() => handleExport(type)} disabled={exporting}>{exporting ? 'Exporting...' : `Export ${type.charAt(0).toUpperCase() + type.slice(1)}`}</button>
             ))}
           </div>
         </div>

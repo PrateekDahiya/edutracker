@@ -7,33 +7,43 @@ import { FaHome, FaCalendarCheck, FaTasks, FaUser, FaCog, FaTachometerAlt, FaUse
 export default function BottomNav() {
   const { data: session, status } = useSession();
   const pathname = usePathname() || "";
+  if (status === "loading") {
+    return (
+      <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-light)] border-t border-[var(--border)] flex justify-around items-center py-2 sm:hidden" style={{ boxShadow: '0 -2px 12px 0 rgba(0,0,0,0.06)' }}>
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className="flex flex-col items-center text-xs w-12 h-10 rounded bg-[var(--border)] animate-pulse" />
+        ))}
+      </nav>
+    );
+  }
   if (!session) return null;
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[var(--bg-light)] border-t border-[var(--border)] flex justify-around items-center py-2 sm:hidden" style={{ boxShadow: '0 -2px 12px 0 rgba(0,0,0,0.06)' }}>
-      <Link href="/dashboard" className={`flex flex-col items-center text-xs ${pathname.startsWith('/dashboard') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}>
+      <Link href="/dashboard" className={`flex flex-col items-center text-xs ${pathname.startsWith('/dashboard') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}> 
         <FaTachometerAlt className="text-xl mb-0.5" />
         Dashboard
       </Link>
-      <Link href="/attendance" className={`flex flex-col items-center text-xs ${pathname.startsWith('/attendance') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}>
+      <Link href="/attendance" className={`flex flex-col items-center text-xs ${pathname.startsWith('/attendance') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}> 
         <FaCalendarCheck className="text-xl mb-0.5" />
         Attendance
       </Link>
-      <Link href="/schedule" className={`flex flex-col items-center text-xs ${pathname.startsWith('/schedule') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}>
+      <Link href="/schedule" className={`flex flex-col items-center text-xs ${pathname.startsWith('/schedule') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}> 
         <FaCalendarCheck className="text-xl mb-0.5" />
         Schedule
       </Link>
-      <Link href="/todo" className={`flex flex-col items-center text-xs ${pathname.startsWith('/todo') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}>
+      <Link href="/todo" className={`flex flex-col items-center text-xs ${pathname.startsWith('/todo') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}> 
         <FaTasks className="text-xl mb-0.5" />
         ToDo
       </Link>
-      <Link href="/profile" className={`flex flex-col items-center text-xs ${pathname.startsWith('/profile') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}>
-        <FaUser className="text-xl mb-0.5" />
-        Profile
-      </Link>
-      {(session.user && (session.user as any).isAdmin) && (
-        <Link href="/admin" className={`flex flex-col items-center text-xs ${pathname.startsWith('/admin') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}>
+      {session.user && (session.user as any).isAdmin ? (
+        <Link href="/admin" className={`flex flex-col items-center text-xs ${pathname.startsWith('/admin') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}> 
           <FaUserShield className="text-xl mb-0.5" />
           Admin
+        </Link>
+      ) : (
+        <Link href="/profile" className={`flex flex-col items-center text-xs ${pathname.startsWith('/profile') ? 'text-[var(--primary)] font-bold' : 'text-[var(--text)] hover:text-[var(--primary)]'}`}> 
+          <FaUser className="text-xl mb-0.5" />
+          Profile
         </Link>
       )}
     </nav>

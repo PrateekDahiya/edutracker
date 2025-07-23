@@ -6,6 +6,8 @@ import { getClasses, Class } from "../../services/scheduleService";
 import { getTasks, Task } from "../../services/todoService";
 import { useSettings } from "../components/SettingsProvider";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
+import LoadingSpinner from "../components/LoadingSpinner";
 
 // Cache utility functions
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
@@ -63,7 +65,7 @@ function clearCache(userId: string): void {
 }
 
 export default function Dashboard() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const { settings, refreshSettings } = useSettings();
   const router = useRouter();
   const [stats, setStats] = useState({
@@ -82,12 +84,10 @@ export default function Dashboard() {
     required: number;
   }>>([]);
   const [taskCompletion, setTaskCompletion] = useState(0);
-  const [tasks, setTasks] = useState<Task[]>([]); // <-- Add this line
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [showCharts, setShowCharts] = useState(false);
   const [loading, setLoading] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
-  
-  // Daily counter state
   const [counter, setCounter] = useState(0);
   const [isRunning, setIsRunning] = useState(false);
   const [startDate, setStartDate] = useState<Date | null>(null);
@@ -148,7 +148,7 @@ export default function Dashboard() {
       tasksDue: tasksDue.length,
       belowRequired: belowRequired.length,
     });
-    setTasks(tasks); // <-- Add this line
+    setTasks(tasks);
 
     // Next class calculation
     let nextCls: Class | null = null;
@@ -373,12 +373,31 @@ export default function Dashboard() {
     </div>
   );
 
+  // Greeting helpers
+  function getGreeting() {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good morning";
+    if (hour < 18) return "Good afternoon";
+    return "Good evening";
+  }
+  const userName = session?.user?.name || (session?.user?.email ? session.user.email.split('@')[0] : "User");
+  const userImage = session?.user?.image || "/profile-placeholder.png";
+  const totalCourses = attendanceData.length;
+  const overallAttendance = attendanceData.length > 0 ? Math.round(attendanceData.reduce((sum, c) => sum + c.percentage, 0) / attendanceData.length) : 0;
+  const tasksCompleted = tasks.filter(t => t.completed).length;
+
+  if (status === "loading" || session === undefined) {
+    return <div className="flex items-center justify-center min-h-[40vh]"><LoadingSpinner withLogo className="scale-125" /></div>;
+  }
   if (!session || !session.user) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-xl text-[var(--danger)] font-bold">Please log in to access the dashboard.</div>
       </div>
     );
+  }
+  if (loading) {
+    return <div className="flex items-center justify-center min-h-[40vh]"><LoadingSpinner withLogo className="scale-125" /></div>;
   }
 
   // Show floating warning if needed
@@ -388,6 +407,26 @@ export default function Dashboard() {
 
   return (
     <div className="max-w-4xl mx-auto p-2 sm:p-4">
+      {/* User Greeting and Profile Stats */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-4">
+          <div className="group relative">
+            <Image
+              src={userImage}
+              alt={userName}
+              width={56}
+              height={56}
+              className="rounded-full border-2 border-[var(--primary)] shadow-lg w-14 h-14 object-cover transition-transform duration-200 group-hover:scale-105 group-hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[var(--primary)] cursor-pointer"
+              tabIndex={0}
+            />
+            <div className="absolute inset-0 rounded-full pointer-events-none group-hover:bg-[var(--primary)]/10 group-focus:bg-[var(--primary)]/10 transition" />
+          </div>
+          <div>
+            <div className="text-lg sm:text-xl font-bold text-[var(--primary)]">{getGreeting()}, {userName.split(' ')[0]}</div>
+            <div className="text-xs text-[var(--text-muted)]">Welcome back to your dashboard!</div>
+          </div>
+        </div>
+      </div>
       {/* Header Section */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 mb-4 sm:mb-6">
         <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-[var(--text)]">Dashboard</h1>
@@ -408,15 +447,6 @@ export default function Dashboard() {
       </div>
       
       {/* Loading State */}
-      {loading && (
-        <div className="mb-4 p-3 sm:p-4 bg-[var(--bg-light)] rounded-xl border border-[var(--border)]">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-[var(--primary)]"></div>
-            <span className="text-sm sm:text-base text-[var(--text-muted)]">Updating dashboard data...</span>
-          </div>
-        </div>
-      )}
-
       {/* Stats Cards Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
         {[

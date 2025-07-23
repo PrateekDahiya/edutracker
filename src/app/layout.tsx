@@ -7,6 +7,9 @@ import Head from 'next/head';
 import { FaHome, FaCalendarCheck, FaTasks, FaUser, FaCog } from "react-icons/fa";
 import Link from "next/link";
 import BottomNav from "./components/BottomNav";
+import LoadingSpinner, { SplashScreen } from "./components/LoadingSpinner";
+import { Suspense } from "react";
+import SplashLayout from "./components/SplashLayout";
 
 export const metadata: Metadata = {
   title: "EduTracker",
@@ -32,9 +35,13 @@ export default function RootLayout({
       <body className="min-h-screen flex flex-col bg-[var(--bg)] text-[var(--text)]">
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem>
           <AppProviders>
-            <main className="flex-1 mx-2 sm:mx-4 md:mx-8 lg:mx-[10%] pt-16 sm:pt-20 md:pt-25 pb-[64px] sm:pb-0">{children}</main>
-            <AIAgent />
-            <BottomNav />
+            <Suspense fallback={<SplashLayout loading={true}><></></SplashLayout>}>
+              <SplashLayout loading={false}>
+                <main className="flex-1 mx-2 sm:mx-4 md:mx-8 lg:mx-[10%] pt-16 sm:pt-20 md:pt-25 pb-[64px] sm:pb-0">{children}</main>
+                <AIAgent />
+                <BottomNav />
+              </SplashLayout>
+            </Suspense>
           </AppProviders>
         </ThemeProvider>
       </body>

@@ -10,7 +10,7 @@ import { useSettings } from "../components/SettingsProvider";
 import { useRouter } from "next/navigation";
 
 export default function Schedule() {
-    const { data: session } = useSession();
+    const { data: session, status } = useSession();
     const { settings, refreshSettings } = useSettings();
     const router = useRouter();
     // Persistent state for classes
@@ -504,6 +504,7 @@ export default function Schedule() {
         }
     }
 
+    if (status === "loading" || session === undefined) return <div className="flex items-center justify-center min-h-[40vh]"><LoadingSpinner withLogo className="scale-125" /></div>;
     if (!session || !session.user) {
       return (
         <div className="min-h-screen flex items-center justify-center">
@@ -524,9 +525,7 @@ export default function Schedule() {
       return <FloatingWarning />;
     }
 
-    if (loading) {
-        return <div className="flex items-center justify-center min-h-[60vh]"><LoadingSpinner /></div>;
-    }
+    if (loading) return <div className="flex items-center justify-center min-h-[40vh]"><LoadingSpinner withLogo className="scale-125" /></div>;
    
 
     return (
@@ -568,6 +567,18 @@ export default function Schedule() {
                 )}
                 {tab === 'today' && (
                     <>
+                        {/* Motivational Message */}
+                        <div className="mb-4">
+                          {todayClasses.length > 0 ? (
+                            <div className="rounded-xl bg-[var(--success)]/10 border border-[var(--success)] text-[var(--success)] px-4 py-3 font-semibold shadow animate-fadein">
+                              <span role="img" aria-label="sun">☀️</span> You have a full day ahead!
+                            </div>
+                          ) : (
+                            <div className="rounded-xl bg-[var(--primary)]/10 border border-[var(--primary)] text-[var(--primary)] px-4 py-3 font-semibold shadow animate-fadein">
+                              <span role="img" aria-label="relax">🎉</span> No classes today, enjoy your break!
+                            </div>
+                          )}
+                        </div>
                         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4 mb-4 sm:mb-6">
                             <span className="text-base sm:text-lg font-semibold text-[var(--text)]">This Week&apos;s Classes</span>
                             

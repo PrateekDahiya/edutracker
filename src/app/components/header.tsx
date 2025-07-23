@@ -44,7 +44,13 @@ export default function Header() {
             </div>
 
             {/* Center: Main Navigation - Hidden on mobile */}
-            {isAuthenticated && (
+            {status === "loading" ? (
+                <nav className="hidden md:flex gap-2 lg:gap-3">
+                    {[...Array(4)].map((_, i) => (
+                        <div key={i} className="w-20 h-8 rounded-xl bg-[var(--border)] animate-pulse" />
+                    ))}
+                </nav>
+            ) : isAuthenticated ? (
                 <nav className="hidden md:flex gap-2 lg:gap-3">
                     <Link href="/dashboard" className={getNavLinkClass("/dashboard")}>Dashboard</Link>
                     <Link href="/attendance" className={getNavLinkClass("/attendance")}>Attendance</Link>
@@ -54,12 +60,14 @@ export default function Header() {
                         <Link href="/admin" className={getNavLinkClass("/admin")}>Admin</Link>
                     )}
                 </nav>
-            )}
+            ) : null}
 
             {/* Right: Theme, Extra Nav, Auth */}
             <div className="flex items-center gap-2 sm:gap-3 md:gap-4">
                 {/* Extra nav - hidden on mobile */}
-                {isAuthenticated && (
+                {status === "loading" ? (
+                    <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[var(--border)] animate-pulse" />
+                ) : isAuthenticated ? (
                     <>
                         {/* Show as icon only on mobile, text link on large screens */}
                         <Link
@@ -71,18 +79,20 @@ export default function Header() {
                         </Link>
                         <Link href="/activity" className={`${getNavLinkClass("/activity")} hidden lg:block`}>Activity</Link>
                     </>
-                )}
+                ) : null}
                 {/* Theme Toggle */}
                 <ThemeToggle />
                 {/* Mobile Menu Button */}
-                {isAuthenticated && (
+                {status === "loading" ? (
+                    <div className="md:hidden w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-[var(--border)] animate-pulse" />
+                ) : isAuthenticated ? (
                     <button
                         onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                         className="md:hidden h-8 w-8 sm:h-10 sm:w-10 rounded-xl bg-[var(--bg-light)] text-[var(--text)] border border-[var(--border)] hover:bg-[var(--primary)] hover:text-[var(--btn-text)] hover:border-[var(--primary)] hover:scale-105 hover:-translate-y-1 focus:scale-105 focus:-translate-y-1 active:scale-95 transition-all duration-200 cursor-pointer shadow-lg hover:shadow-xl ring-2 ring-transparent focus:ring-[var(--primary)] flex items-center justify-center hide-on-mobile"
                     >
                         <span className="text-lg">{isMobileMenuOpen ? '✕' : '☰'}</span>
                     </button>
-                )}
+                ) : null}
                 {/* Auth area */}
                 <div className="flex items-center gap-2 sm:gap-3">
                     {status === "loading" ? (
@@ -127,7 +137,7 @@ export default function Header() {
             </div>
 
             {/* Mobile Menu Overlay */}
-            {isMobileMenuOpen && isAuthenticated && (
+            {isMobileMenuOpen && status !== "loading" && isAuthenticated && (
                 <div className="fixed inset-0 z-40 md:hidden">
                     {/* Backdrop */}
                     <div
